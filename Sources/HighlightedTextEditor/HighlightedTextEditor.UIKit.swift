@@ -8,6 +8,57 @@
 
 import SwiftUI
 import UIKit
+import NextGrowingTextView
+
+
+public class IntrinsicHeightGrowingTextView: UIView {
+    
+    let growingView: NextGrowingTextView
+    public var textView: UITextView { growingView.textView }
+    
+    public init() {
+        self.growingView = NextGrowingTextView()
+        
+        super.init(frame: .zero)
+        
+        backgroundColor = .clear
+        addSubview(growingView)
+    }
+    
+    @available(*, unavailable) required init?(coder _: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
+    var explicitHeight: CGFloat = .zero
+    
+    public var contentHeight: CGFloat = .zero {
+        didSet { invalidateIntrinsicContentSize() }
+    }
+    public override var intrinsicContentSize: CGSize {
+        .init(width: UIView.noIntrinsicMetric, height: contentHeight)
+//        .init(width: UIView.noIntrinsicMetric, height: growingView.intrinsicContentSize.height)
+    }
+
+
+    public override var frame: CGRect {
+        didSet {
+            guard frame != oldValue else { return }
+
+            growingView.frame = self.bounds
+            growingView.layoutIfNeeded()
+
+            let targetSize = CGSize(width: frame.width, height: UIView.layoutFittingCompressedSize.height)
+
+            contentHeight = growingView.systemLayoutSizeFitting(targetSize,
+                                                                withHorizontalFittingPriority: .required,
+                                                                verticalFittingPriority: .fittingSizeLevel).height
+        }
+    }
+}
+
+
+
+
 
 public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor {
     public struct Internals {
@@ -22,6 +73,7 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
     }
 
     let highlightRules: [HighlightRule]
+    let config: HighlightedTextEditorConfig
 
     private(set) var onEditingChanged: OnEditingChangedCallback?
     private(set) var onCommit: OnCommitCallback?
@@ -31,26 +83,52 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
 
     public init(
         text: Binding<String>,
-        highlightRules: [HighlightRule]
+        highlightRules: [HighlightRule],
+        config: HighlightedTextEditorConfig = .defaultConfig()
     ) {
         _text = text
         self.highlightRules = highlightRules
+        self.config = config
     }
 
     public func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
 
-    public func makeUIView(context: Context) -> UITextView {
-        let textView = UITextView()
-        textView.delegate = context.coordinator
-        updateTextViewModifiers(textView)
-
-        return textView
+    public func makeUIView(context: Context) -> IntrinsicHeightGrowingTextView {
+        let intrinsicGrowingTextView = IntrinsicHeightGrowingTextView()
+        let growingView = intrinsicGrowingTextView.growingView
+        
+        growingView.backgroundColor = .orange
+        
+        
+        growingView.actionHandler = context.coordinator.growingActionHandler
+        
+        
+        
+        growingView.configuration = .init(
+            minLines: config.iosMinLineCount,
+            maxLines: config.iosMaxLineCount,
+            isAutomaticScrollToBottomEnabled: true,
+            isFlashScrollIndicatorsEnabled: false
+        )
+        growingView.textView.delegate = context.coordinator
+        updateTextViewModifiers(growingView.textView)
+        
+        
+        context.coordinator.containerView = intrinsicGrowingTextView
+        
+        return intrinsicGrowingTextView
     }
 
-    public func updateUIView(_ uiView: UITextView, context: Context) {
-        uiView.isScrollEnabled = false
+    public func updateUIView(_ uiView: IntrinsicHeightGrowingTextView, context: Context) {
+        
+        print("NextGrowingTextView intrinsicContentSize: textView.intrinsicSize: \(uiView.textView.intrinsicContentSize) growingView.intrinsicSize: \(uiView.intrinsicContentSize)")
+        print("NextGrowingTextView frameSize: textView.frame: \(uiView.textView.frame.size) growingView.frame.size: \(uiView.frame.size)")
+        
+        
+        
+        uiView.textView.isScrollEnabled = false
         context.coordinator.updatingUIView = true
 
         let highlightedText = HighlightedTextEditor.getHighlightedText(
@@ -58,15 +136,15 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
             highlightRules: highlightRules
         )
 
-        if let range = uiView.markedTextNSRange {
-            uiView.setAttributedMarkedText(highlightedText, selectedRange: range)
+        if let range = uiView.textView.markedTextNSRange {
+            uiView.textView.setAttributedMarkedText(highlightedText, selectedRange: range)
         } else {
-            uiView.attributedText = highlightedText
+            uiView.textView.attributedText = highlightedText
         }
-        updateTextViewModifiers(uiView)
-        runIntrospect(uiView)
-        uiView.isScrollEnabled = true
-        uiView.selectedTextRange = context.coordinator.selectedTextRange
+        updateTextViewModifiers(uiView.textView)
+        runIntrospect(uiView.textView)
+        uiView.textView.isScrollEnabled = true
+        uiView.textView.selectedTextRange = context.coordinator.selectedTextRange
         context.coordinator.updatingUIView = false
     }
 
@@ -87,8 +165,35 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
         var selectedTextRange: UITextRange?
         var updatingUIView = false
 
+        var containerView: IntrinsicHeightGrowingTextView? = nil
+        
+        let displayConfig: HighlightedTextEditorConfig
+        
         init(_ markdownEditorView: HighlightedTextEditor) {
             self.parent = markdownEditorView
+            self.displayConfig = parent.config
+        }
+        
+        func updateTextViewHeight(_ newHeight: CGFloat) {
+            guard let container = containerView else { return }
+//            container.contentHeight = newHeight
+            
+            UIView.animate(withDuration: 1.0) {
+//                container.frame = containerNewFrame
+                container.contentHeight = newHeight
+            }
+            
+        }
+        
+        
+        public func growingActionHandler(_ action: NextGrowingTextView.Action) {
+            print("[GrowingActionHandler] action: \(action)")
+            switch action {
+            case .willChangeHeight(let newHeight):
+                self.updateTextViewHeight(newHeight)
+            default:
+                return
+            }
         }
 
         public func textViewDidChange(_ textView: UITextView) {

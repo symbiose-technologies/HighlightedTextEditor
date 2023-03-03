@@ -21,3 +21,13 @@ public let package = Package(
         )
     ]
 )
+
+if #available(iOS 15.0, *) {
+    package.dependencies.append(.package(url: "https://github.com/FluidGroup/NextGrowingTextView",
+                                         from: "2.2.1"))
+    package.targets[0] = .target(
+        name: "HighlightedTextEditor",
+        dependencies: ["NextGrowingTextView"]
+    )
+}
+

@@ -26,7 +26,8 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
     }
 
     let highlightRules: [HighlightRule]
-
+    let config: HighlightedTextEditorConfig
+    
     private(set) var onEditingChanged: OnEditingChangedCallback?
     private(set) var onCommit: OnCommitCallback?
     private(set) var onTextChange: OnTextChangeCallback?
@@ -35,10 +36,12 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
 
     public init(
         text: Binding<String>,
-        highlightRules: [HighlightRule]
+        highlightRules: [HighlightRule],
+        config: HighlightedTextEditorConfig = .defaultConfig()
     ) {
         _text = text
         self.highlightRules = highlightRules
+        self.config = config
     }
 
     public func makeCoordinator() -> Coordinator {
@@ -46,7 +49,7 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
     }
 
     public func makeNSView(context: Context) -> ScrollableTextView {
-        let textView = ScrollableTextView()
+        let textView = ScrollableTextView(self.config)
         textView.delegate = context.coordinator
 
         return textView
@@ -76,13 +79,17 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
 }
 
 public extension HighlightedTextEditor {
+    
     final class Coordinator: NSObject, NSTextViewDelegate {
         var parent: HighlightedTextEditor
         var selectedRanges: [NSValue] = []
         var updatingNSView = false
 
+        var displayConfig: HighlightedTextEditorConfig
+        
         init(_ parent: HighlightedTextEditor) {
             self.parent = parent
+            self.displayConfig = parent.config
         }
 
         public func textView(
@@ -153,6 +160,10 @@ public extension HighlightedTextEditor {
             }
         }
 
+        var displayConfig: HighlightedTextEditorConfig
+        
+        
+        
         public lazy var scrollView: NSScrollView = {
             let scrollView = NSScrollView()
             scrollView.drawsBackground = true
@@ -166,6 +177,15 @@ public extension HighlightedTextEditor {
         }()
 
         public lazy var textView: NSTextView = {
+            if self.displayConfig.isAutoGrowing {
+                return self.dynamicTextView
+            } else {
+                return self.vanillaTextView
+            }
+        }()
+        
+        
+        public lazy var vanillaTextView: NSTextView = {
             let contentSize = scrollView.contentSize
             let textStorage = NSTextStorage()
 
@@ -194,12 +214,43 @@ public extension HighlightedTextEditor {
 
             return textView
         }()
+        
+        
+        public lazy var dynamicTextView: DynamicHeightNSTextView = {
+            let contentSize = scrollView.contentSize
+            let textStorage = NSTextStorage()
+
+            let layoutManager = NSLayoutManager()
+            textStorage.addLayoutManager(layoutManager)
+
+            let textContainer = NSTextContainer(containerSize: scrollView.frame.size)
+            textContainer.widthTracksTextView = true
+            textContainer.containerSize = NSSize(
+                width: contentSize.width,
+                height: CGFloat.greatestFiniteMagnitude
+            )
+
+            layoutManager.addTextContainer(textContainer)
+
+            let textView = DynamicHeightNSTextView(frame: .zero, textContainer: textContainer)
+            textView.autoresizingMask = [.width, .height]
+//            textView.backgroundColor = NSColor.textBackgroundColor
+            textView.delegate = self.delegate
+            textView.drawsBackground = true
+            textView.isHorizontallyResizable = false
+            textView.isVerticallyResizable = true
+            textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
+            textView.minSize = NSSize(width: 0, height: contentSize.height)
+            textView.textColor = NSColor.labelColor
+
+            return textView
+        }()
 
         // MARK: - Init
 
-        init() {
+        init(_ displayConfig: HighlightedTextEditorConfig) {
+            self.displayConfig = displayConfig
             self.attributedText = NSMutableAttributedString()
-
             super.init(frame: .zero)
         }
 
@@ -232,6 +283,12 @@ public extension HighlightedTextEditor {
 
         func setupTextView() {
             scrollView.documentView = textView
+            if self.displayConfig.isAutoGrowing,
+               let dynamicHView = textView as? DynamicHeightNSTextView {
+                dynamicHView.setupDynamicHeight(scrollView: scrollView,
+                                                maxHeight: displayConfig.maxHeight,
+                                                minHeight: displayConfig.minHeight)
+            }
         }
     }
 }
