@@ -100,6 +100,8 @@ public typealias OnTextChangeCallback = (_ editorContent: String) -> Void
 public typealias OnPastedImagesCallback = ([ImageRepresentable]) -> Bool
 public typealias OnDroppedImagesCallback = ([ImageRepresentable]) -> Bool
 
+public typealias OnPastedContentCallback = ([ImageRepresentable], [URL]) -> Bool
+public typealias OnDroppedContentCallback = ([ImageRepresentable], [URL]) -> Bool
 
 extension HighlightingTextEditor {
     var placeholderFont: SystemColorAlias { SystemColorAlias() }

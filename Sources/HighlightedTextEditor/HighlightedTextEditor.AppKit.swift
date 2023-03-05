@@ -37,6 +37,9 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
     private(set) var onPastedImages: OnPastedImagesCallback?
     private(set) var onDroppedImages: OnDroppedImagesCallback?
     
+    private(set) var onPastedContent: OnPastedContentCallback?
+    private(set) var onDroppedContent: OnDroppedContentCallback?
+    
     
     public init(
         text: Binding<String>,
@@ -57,6 +60,10 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
         textView.delegate = context.coordinator
         textView.textView.onPastedImages = self.onPastedImages
         textView.textView.onDroppedImages = self.onDroppedImages
+        
+        textView.textView.onPastedContent = self.onPastedContent
+        textView.textView.onDroppedContent = self.onDroppedContent
+        
         
         return textView
     }
@@ -354,6 +361,17 @@ public extension HighlightedTextEditor {
     func onDroppedImages(_ callback: @escaping OnDroppedImagesCallback) -> Self {
         var editor = self
         editor.onDroppedImages = callback
+        return editor
+    }
+    
+    func onPastedContent(_ callback: @escaping OnPastedContentCallback) -> Self {
+        var editor = self
+        editor.onPastedContent = callback
+        return editor
+    }
+    func onDroppedContent(_ callback: @escaping OnDroppedContentCallback) -> Self {
+        var editor = self
+        editor.onDroppedContent = callback
         return editor
     }
     
