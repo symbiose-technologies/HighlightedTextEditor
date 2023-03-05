@@ -81,6 +81,10 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
     private(set) var onSelectionChange: OnSelectionChangeCallback?
     private(set) var introspect: IntrospectCallback?
 
+    private(set) var onPastedImages: OnPastedImagesCallback?
+    private(set) var onDroppedImages: OnDroppedImagesCallback?
+    
+    
     public init(
         text: Binding<String>,
         highlightRules: [HighlightRule],
@@ -98,8 +102,6 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
     public func makeUIView(context: Context) -> IntrinsicHeightGrowingTextView {
         let intrinsicGrowingTextView = IntrinsicHeightGrowingTextView()
         let growingView = intrinsicGrowingTextView.growingView
-        
-        growingView.backgroundColor = .orange
         
         
         growingView.actionHandler = context.coordinator.growingActionHandler
@@ -219,6 +221,14 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
         public func textViewDidEndEditing(_ textView: UITextView) {
             parent.onCommit?()
         }
+        public func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
+            return true
+        }
+                
+        public func textView(_ textView: UITextView, shouldInteractWith textAttachment: NSTextAttachment, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
+            return false // Prevent pasted images from being intercepted
+        }
+        
     }
 }
 
@@ -254,6 +264,19 @@ public extension HighlightedTextEditor {
         var new = self
         new.onTextChange = callback
         return new
+    }
+    
+    
+    func onPastedImages(_ callback: @escaping OnPastedImagesCallback) -> Self {
+        var editor = self
+        editor.onPastedImages = callback
+        return editor
+    }
+    
+    func onDroppedImages(_ callback: @escaping OnDroppedImagesCallback) -> Self {
+        var editor = self
+        editor.onDroppedImages = callback
+        return editor
     }
 }
 #endif

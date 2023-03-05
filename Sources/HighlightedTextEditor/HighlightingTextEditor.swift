@@ -97,6 +97,9 @@ public typealias EmptyCallback = () -> Void
 public typealias OnCommitCallback = EmptyCallback
 public typealias OnEditingChangedCallback = EmptyCallback
 public typealias OnTextChangeCallback = (_ editorContent: String) -> Void
+public typealias OnPastedImagesCallback = ([ImageRepresentable]) -> Bool
+public typealias OnDroppedImagesCallback = ([ImageRepresentable]) -> Bool
+
 
 extension HighlightingTextEditor {
     var placeholderFont: SystemColorAlias { SystemColorAlias() }

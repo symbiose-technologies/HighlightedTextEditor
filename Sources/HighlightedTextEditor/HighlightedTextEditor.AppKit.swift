@@ -34,6 +34,10 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
     private(set) var onSelectionChange: OnSelectionChangeCallback?
     private(set) var introspect: IntrospectCallback?
 
+    private(set) var onPastedImages: OnPastedImagesCallback?
+    private(set) var onDroppedImages: OnDroppedImagesCallback?
+    
+    
     public init(
         text: Binding<String>,
         highlightRules: [HighlightRule],
@@ -51,7 +55,9 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
     public func makeNSView(context: Context) -> ScrollableTextView {
         let textView = ScrollableTextView(self.config)
         textView.delegate = context.coordinator
-
+        textView.textView.onPastedImages = self.onPastedImages
+        textView.textView.onDroppedImages = self.onDroppedImages
+        
         return textView
     }
 
@@ -137,6 +143,11 @@ public extension HighlightedTextEditor {
             parent.text = textView.string
             parent.onCommit?()
         }
+        
+        
+//        func textView(_ textView: NSTextView, shouldInteractWith attachment: NSTextAttachment, in characterRange: NSRange) -> Bool {
+//            return false // Prevent pasted images from being intercepted
+//        }
     }
 }
 
@@ -176,7 +187,7 @@ public extension HighlightedTextEditor {
             return scrollView
         }()
 
-        public lazy var textView: NSTextView = {
+        public lazy var textView: SymNSTextView = {
             if self.displayConfig.isAutoGrowing {
                 return self.dynamicTextView
             } else {
@@ -185,7 +196,7 @@ public extension HighlightedTextEditor {
         }()
         
         
-        public lazy var vanillaTextView: NSTextView = {
+        public lazy var vanillaTextView: SymNSTextView = {
             let contentSize = scrollView.contentSize
             let textStorage = NSTextStorage()
 
@@ -201,7 +212,7 @@ public extension HighlightedTextEditor {
 
             layoutManager.addTextContainer(textContainer)
 
-            let textView = NSTextView(frame: .zero, textContainer: textContainer)
+            let textView = SymNSTextView(frame: .zero, textContainer: textContainer)
             textView.autoresizingMask = .width
             textView.backgroundColor = NSColor.textBackgroundColor
             textView.delegate = self.delegate
@@ -332,5 +343,19 @@ public extension HighlightedTextEditor {
         }
         return editor
     }
+    
+    func onPastedImages(_ callback: @escaping OnPastedImagesCallback) -> Self {
+        var editor = self
+        editor.onPastedImages = callback
+        
+        return editor
+    }
+    
+    func onDroppedImages(_ callback: @escaping OnDroppedImagesCallback) -> Self {
+        var editor = self
+        editor.onDroppedImages = callback
+        return editor
+    }
+    
 }
 #endif

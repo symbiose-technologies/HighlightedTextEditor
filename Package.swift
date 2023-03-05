@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.7
 
 import PackageDescription
 
@@ -14,20 +14,16 @@ public let package = Package(
             targets: ["HighlightedTextEditor"]
         )
     ],
+    dependencies: [
+        .package(url: "https://github.com/symbiose-technologies/NextGrowingTextView", branch: "symbiose")
+    ],
     targets: [
         .target(
             name: "HighlightedTextEditor",
-            dependencies: []
+            dependencies: [
+                .product(name: "NextGrowingTextView", package: "NextGrowingTextView")
+            ]
         )
     ]
 )
-
-if #available(iOS 15.0, *) {
-    package.dependencies.append(.package(url: "https://github.com/FluidGroup/NextGrowingTextView",
-                                         from: "2.2.1"))
-    package.targets[0] = .target(
-        name: "HighlightedTextEditor",
-        dependencies: ["NextGrowingTextView"]
-    )
-}
 

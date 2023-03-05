@@ -8,7 +8,7 @@
 import Foundation
 import AppKit
 
-open class DynamicHeightNSTextView: NSTextView {
+open class DynamicHeightNSTextView: SymNSTextView {
 
     var scrollViewHeight: NSLayoutConstraint? = nil
     var maxHeight: CGFloat = CGFloat.greatestFiniteMagnitude
