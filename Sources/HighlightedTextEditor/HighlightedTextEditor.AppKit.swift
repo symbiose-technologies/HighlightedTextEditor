@@ -12,6 +12,8 @@
 import AppKit
 import Combine
 import SwiftUI
+import Combine
+
 
 public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor {
     public struct Internals {
@@ -34,36 +36,40 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
     private(set) var onSelectionChange: OnSelectionChangeCallback?
     private(set) var introspect: IntrospectCallback?
 
-    private(set) var onPastedImages: OnPastedImagesCallback?
-    private(set) var onDroppedImages: OnDroppedImagesCallback?
     
     private(set) var onPastedContent: OnPastedContentCallback?
     private(set) var onDroppedContent: OnDroppedContentCallback?
+    private(set) var onPastedItems: OnPastedItemsCallback?
+    private(set) var onDroppedItems: OnDroppedItemsCallback?
     
+    
+    @ObservedObject
+    private(set) var context: HighlightedTextEditorContext
+
     
     public init(
         text: Binding<String>,
         highlightRules: [HighlightRule],
+        context: HighlightedTextEditorContext,
         config: HighlightedTextEditorConfig = .defaultConfig()
     ) {
         _text = text
         self.highlightRules = highlightRules
+        self.context = context
         self.config = config
     }
 
-    public func makeCoordinator() -> Coordinator {
-        Coordinator(self)
+    public func makeCoordinator() -> HighlightedTextEditorCoordinator {
+        HighlightedTextEditorCoordinator(self)
     }
 
     public func makeNSView(context: Context) -> ScrollableTextView {
         let textView = ScrollableTextView(self.config)
-        textView.delegate = context.coordinator
-        textView.textView.onPastedImages = self.onPastedImages
-        textView.textView.onDroppedImages = self.onDroppedImages
         
+        textView.delegate = context.coordinator
         textView.textView.onPastedContent = self.onPastedContent
         textView.textView.onDroppedContent = self.onDroppedContent
-        
+        context.coordinator.scrollableTextView = textView
         
         return textView
     }
@@ -91,75 +97,58 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
     }
 }
 
-public extension HighlightedTextEditor {
+extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
     
-    final class Coordinator: NSObject, NSTextViewDelegate {
-        var parent: HighlightedTextEditor
-        var selectedRanges: [NSValue] = []
-        var updatingNSView = false
-
-        var displayConfig: HighlightedTextEditorConfig
-        
-        init(_ parent: HighlightedTextEditor) {
-            self.parent = parent
-            self.displayConfig = parent.config
-        }
-
-        public func textView(
-            _ textView: NSTextView,
-            shouldChangeTextIn affectedCharRange: NSRange,
-            replacementString: String?
-        ) -> Bool {
-            return true
-        }
-
-        public func textDidBeginEditing(_ notification: Notification) {
-            guard let textView = notification.object as? NSTextView else {
-                return
-            }
-
-            parent.text = textView.string
-            parent.onEditingChanged?()
-        }
-
-        public func textDidChange(_ notification: Notification) {
-            guard let textView = notification.object as? NSTextView else { return }
-            let content = String(textView.textStorage?.string ?? "")
-
-            parent.text = content
-            selectedRanges = textView.selectedRanges
-        }
-
-        public func textViewDidChangeSelection(_ notification: Notification) {
-            guard let textView = notification.object as? NSTextView,
-                  let onSelectionChange = parent.onSelectionChange,
-                  !updatingNSView,
-                  let ranges = textView.selectedRanges as? [NSRange]
-            else { return }
-            selectedRanges = textView.selectedRanges
-            DispatchQueue.main.async {
-                onSelectionChange(ranges)
-            }
-        }
-
-        public func textDidEndEditing(_ notification: Notification) {
-            guard let textView = notification.object as? NSTextView else {
-                return
-            }
-
-            parent.text = textView.string
-            parent.onCommit?()
-        }
-        
-        
-//        func textView(_ textView: NSTextView, shouldInteractWith attachment: NSTextAttachment, in characterRange: NSRange) -> Bool {
-//            return false // Prevent pasted images from being intercepted
-//        }
+    public func textView(
+        _ textView: NSTextView,
+        shouldChangeTextIn affectedCharRange: NSRange,
+        replacementString: String?
+    ) -> Bool {
+        return true
     }
+
+    public func textDidBeginEditing(_ notification: Notification) {
+        guard let textView = notification.object as? NSTextView else {
+            return
+        }
+
+        parent.text = textView.string
+        parent.onEditingChanged?()
+    }
+
+    public func textDidChange(_ notification: Notification) {
+        guard let textView = notification.object as? NSTextView else { return }
+        let content = String(textView.textStorage?.string ?? "")
+
+        parent.text = content
+        selectedRanges = textView.selectedRanges
+    }
+
+    public func textViewDidChangeSelection(_ notification: Notification) {
+        guard let textView = notification.object as? NSTextView,
+              let onSelectionChange = parent.onSelectionChange,
+              !updatingNSView,
+              let ranges = textView.selectedRanges as? [NSRange]
+        else { return }
+        selectedRanges = textView.selectedRanges
+        DispatchQueue.main.async {
+            onSelectionChange(ranges)
+        }
+    }
+
+    public func textDidEndEditing(_ notification: Notification) {
+        guard let textView = notification.object as? NSTextView else {
+            return
+        }
+
+        parent.text = textView.string
+        parent.onCommit?()
+    }
+    
 }
 
 public extension HighlightedTextEditor {
-    final class ScrollableTextView: NSView {
+    public class ScrollableTextView: NSView {
         weak var delegate: NSTextViewDelegate?
 
         var attributedText: NSAttributedString {
@@ -351,24 +340,28 @@ public extension HighlightedTextEditor {
         return editor
     }
     
-    func onPastedImages(_ callback: @escaping OnPastedImagesCallback) -> Self {
+    
+    //for iOS
+    func onPastedItems(_ callback: @escaping OnPastedItemsCallback) -> Self {
         var editor = self
-        editor.onPastedImages = callback
-        
+        editor.onPastedItems = callback
+        return editor
+    }
+    //for iOS
+    func onDroppedItems(_ callback: @escaping OnDroppedItemsCallback) -> Self {
+        var editor = self
+        editor.onDroppedItems = callback
         return editor
     }
     
-    func onDroppedImages(_ callback: @escaping OnDroppedImagesCallback) -> Self {
-        var editor = self
-        editor.onDroppedImages = callback
-        return editor
-    }
-    
+    //for macOS
     func onPastedContent(_ callback: @escaping OnPastedContentCallback) -> Self {
         var editor = self
         editor.onPastedContent = callback
         return editor
     }
+    
+    //for macOS
     func onDroppedContent(_ callback: @escaping OnDroppedContentCallback) -> Self {
         var editor = self
         editor.onDroppedContent = callback

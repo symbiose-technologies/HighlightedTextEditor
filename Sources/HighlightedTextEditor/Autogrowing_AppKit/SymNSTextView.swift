@@ -17,8 +17,6 @@ open class SymNSTextView: NSTextView {
      */
     
     
-    var onPastedImages: OnPastedImagesCallback?
-    var onDroppedImages: OnDroppedImagesCallback?
     
     var onPastedContent: OnPastedContentCallback?
     var onDroppedContent: OnDroppedContentCallback?

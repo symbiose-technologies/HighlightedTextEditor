@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 #if os(macOS)
 import AppKit
@@ -97,11 +98,11 @@ public typealias EmptyCallback = () -> Void
 public typealias OnCommitCallback = EmptyCallback
 public typealias OnEditingChangedCallback = EmptyCallback
 public typealias OnTextChangeCallback = (_ editorContent: String) -> Void
-public typealias OnPastedImagesCallback = ([ImageRepresentable]) -> Bool
-public typealias OnDroppedImagesCallback = ([ImageRepresentable]) -> Bool
-
 public typealias OnPastedContentCallback = ([ImageRepresentable], [URL]) -> Bool
 public typealias OnDroppedContentCallback = ([ImageRepresentable], [URL]) -> Bool
+public typealias OnPastedItemsCallback = ([NSItemProvider]) -> Bool
+public typealias OnDroppedItemsCallback = ([NSItemProvider]) -> Bool
+public typealias AcceptableDroppedItems = [UTType]
 
 extension HighlightingTextEditor {
     var placeholderFont: SystemColorAlias { SystemColorAlias() }
