@@ -16,7 +16,13 @@ open class SymNSTextView: NSTextView {
      Paste the current pasteboard content into the text view.
      */
     
-    
+//    open override var frame: CGRect {
+//        didSet {
+////            backgroundColor = .clear
+//            backgroundColor = .yellow
+//            drawsBackground = true
+//        }
+//    }
     
     var onPastedContent: OnPastedContentCallback?
     var onDroppedContent: OnDroppedContentCallback?
@@ -85,22 +91,22 @@ open class SymNSTextView: NSTextView {
                     color(to: .secondaryLabelColor)
                     return .copy
                 case false:
-                    color(to: .disabledControlTextColor)
+                    color(to: .clear)
                     return .init()
             }
     }
     
+    open override func draggingExited(_ sender: NSDraggingInfo?)
+    { color(to: .clear) }
 
-//    open override func draggingExited(_ sender: NSDraggingInfo?)
-//    { color(to: .clear) }
-//
-//    open override func draggingEnded(_ sender: NSDraggingInfo)
-//    { color(to: .clear) }
+    open override func draggingEnded(_ sender: NSDraggingInfo)
+    { color(to: .clear) }
     
     func color(to color: NSColor)
         {
+            self.backgroundColor = color
 //            self.wantsLayer = true
-            self.layer?.backgroundColor = color.cgColor
+//            self.layer?.backgroundColor = color.cgColor
         }
     
     // MARK: - Open Functionality

@@ -69,6 +69,7 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
         textView.delegate = context.coordinator
         textView.textView.onPastedContent = self.onPastedContent
         textView.textView.onDroppedContent = self.onDroppedContent
+        
         context.coordinator.scrollableTextView = textView
         
         return textView
@@ -173,7 +174,8 @@ public extension HighlightedTextEditor {
         
         public lazy var scrollView: NSScrollView = {
             let scrollView = NSScrollView()
-            scrollView.drawsBackground = true
+            scrollView.drawsBackground = false
+            
             scrollView.borderType = .noBorder
             scrollView.hasVerticalScroller = true
             scrollView.hasHorizontalRuler = false
@@ -210,9 +212,13 @@ public extension HighlightedTextEditor {
 
             let textView = SymNSTextView(frame: .zero, textContainer: textContainer)
             textView.autoresizingMask = .width
-            textView.backgroundColor = NSColor.textBackgroundColor
+//            textView.backgroundColor = NSColor.clear
             textView.delegate = self.delegate
+            textView.allowsUndo = true
+            
             textView.drawsBackground = true
+            textView.backgroundColor = .clear
+            
             textView.isHorizontallyResizable = false
             textView.isVerticallyResizable = true
             textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
@@ -241,9 +247,15 @@ public extension HighlightedTextEditor {
 
             let textView = DynamicHeightNSTextView(frame: .zero, textContainer: textContainer)
             textView.autoresizingMask = [.width, .height]
-//            textView.backgroundColor = NSColor.textBackgroundColor
+            
             textView.delegate = self.delegate
+            
+            textView.allowsUndo = true
+            
             textView.drawsBackground = true
+            textView.backgroundColor = .clear
+            
+            
             textView.isHorizontallyResizable = false
             textView.isVerticallyResizable = true
             textView.maxSize = NSSize(width: CGFloat.greatestFiniteMagnitude, height: CGFloat.greatestFiniteMagnitude)
@@ -273,6 +285,8 @@ public extension HighlightedTextEditor {
 
             setupScrollViewConstraints()
             setupTextView()
+            
+            
         }
 
         func setupScrollViewConstraints() {

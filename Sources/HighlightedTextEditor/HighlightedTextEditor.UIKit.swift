@@ -66,7 +66,7 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
         
         growingView.textView.pasteItemsCallback = self.onPastedItems
         growingView.textView.dropCallback = self.onDroppedItems
-        
+        growingView.textView.keyboardDismissMode = .interactiveWithAccessory
         growingView.actionHandler = context.coordinator.growingActionHandler
         
         growingView.configuration = .init(
