@@ -19,10 +19,13 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
 
     @Binding var text: String {
         didSet {
-            onTextChange?(text)
+            onTextChange?(text, currentSelectionFirst)
         }
     }
 
+    @State var currentSelection: [NSRange] = []
+    
+    
     let highlightRules: [HighlightRule]
     let config: HighlightedTextEditorConfig
 
@@ -124,6 +127,8 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
     }
 }
 
+
+
 extension HighlightedTextEditorCoordinator: UITextViewDelegate {
     func updateTextViewHeight(_ newHeight: CGFloat) {
         guard let container = containerView else { return }
@@ -137,7 +142,7 @@ extension HighlightedTextEditorCoordinator: UITextViewDelegate {
     
     
     public func growingActionHandler(_ action: NextGrowingTextView.Action) {
-        print("[GrowingActionHandler] action: \(action)")
+//        print("[GrowingActionHandler] action: \(action)")
         switch action {
         case .willChangeHeight(let newHeight):
             self.updateTextViewHeight(newHeight)
@@ -155,10 +160,12 @@ extension HighlightedTextEditorCoordinator: UITextViewDelegate {
     }
 
     public func textViewDidChangeSelection(_ textView: UITextView) {
-        guard let onSelectionChange = parent.onSelectionChange,
-              !updatingUIView
+        guard !updatingUIView
         else { return }
         selectedTextRange = textView.selectedTextRange
+        self.parent.currentSelection = [textView.selectedRange]
+        guard let onSelectionChange = parent.onSelectionChange else { return }
+        
         onSelectionChange([textView.selectedRange])
     }
 

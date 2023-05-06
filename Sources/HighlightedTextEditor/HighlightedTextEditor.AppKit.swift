@@ -23,9 +23,12 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
 
     @Binding var text: String {
         didSet {
-            onTextChange?(text)
+            onTextChange?(text, currentSelectionFirst)
         }
     }
+    
+    @State var currentSelection: [NSRange] = []
+    
 
     let highlightRules: [HighlightRule]
     let config: HighlightedTextEditorConfig
@@ -132,6 +135,8 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
               let ranges = textView.selectedRanges as? [NSRange]
         else { return }
         selectedRanges = textView.selectedRanges
+        self.parent.currentSelection = selectedRanges as? [NSRange] ?? []
+        guard let onSelectionChange = parent.onSelectionChange else { return }
         DispatchQueue.main.async {
             onSelectionChange(ranges)
         }
