@@ -10,12 +10,20 @@ import Foundation
 
 public struct HighlightedTextEditorConfig: Equatable, Hashable {
     
-    var isAutoGrowing: Bool
-    var minHeight: CGFloat?
-    var maxHeight: CGFloat?
+    public var isAutoGrowing: Bool
+    public var minHeight: CGFloat?
+    public var maxHeight: CGFloat?
     
-    var iosMinLineCount: Int
-    var iosMaxLineCount: Int
+    public var iosMinLineCount: Int
+    public var iosMaxLineCount: Int
+    
+    public init(isAutoGrowing: Bool, minHeight: CGFloat? = nil, maxHeight: CGFloat? = nil, iosMinLineCount: Int, iosMaxLineCount: Int) {
+        self.isAutoGrowing = isAutoGrowing
+        self.minHeight = minHeight
+        self.maxHeight = maxHeight
+        self.iosMinLineCount = iosMinLineCount
+        self.iosMaxLineCount = iosMaxLineCount
+    }
     
     public static func defaultConfig() -> HighlightedTextEditorConfig {
         HighlightedTextEditorConfig(isAutoGrowing: true,
