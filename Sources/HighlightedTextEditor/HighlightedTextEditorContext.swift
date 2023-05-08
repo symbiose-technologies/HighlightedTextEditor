@@ -30,12 +30,18 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     public var isEditingText = false
     
     
-    func stopEditingText() {
-        isEditingText = false
+    public func stopEditingText() {
+//        isEditingText = false
+        if isEditingText {
+            isEditingText = false
+        }
     }
     
-    func startEditingText() {
-        isEditingText = true
+    
+    public func startEditingText() {
+        if !isEditingText {
+            isEditingText = true
+        }
     }
     
 }

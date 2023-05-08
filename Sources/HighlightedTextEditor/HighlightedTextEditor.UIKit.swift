@@ -72,6 +72,8 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
         growingView.textView.keyboardDismissMode = .interactiveWithAccessory
         growingView.actionHandler = context.coordinator.growingActionHandler
         
+        
+        
         growingView.configuration = .init(
             minLines: config.iosMinLineCount,
             maxLines: config.iosMaxLineCount,
@@ -170,10 +172,21 @@ extension HighlightedTextEditorCoordinator: UITextViewDelegate {
     }
 
     public func textViewDidBeginEditing(_ textView: UITextView) {
+        if !context.isEditingText {
+            DispatchQueue.main.async { [weak self] in
+                
+                self?.context.isEditingText = true
+            }
+        }
         parent.onEditingChanged?()
     }
 
     public func textViewDidEndEditing(_ textView: UITextView) {
+        if context.isEditingText {
+            DispatchQueue.main.async { [weak self] in
+                self?.context.isEditingText = false
+            }
+        }
         parent.onCommit?()
     }
     public func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {

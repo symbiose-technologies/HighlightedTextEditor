@@ -46,7 +46,7 @@ open class HighlightedTextEditorCoordinator: NSObject {
         self.displayConfig = parent.config
         super.init()
         
-        self.subscribeToContextChanges()
+//        self.subscribeToContextChanges()
     }
     
     
@@ -54,6 +54,8 @@ open class HighlightedTextEditorCoordinator: NSObject {
     func subscribeToContextChanges() {
         
         context.$isEditingText
+            //skip the first 4 published events
+            .dropFirst(4)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] newIsEditing in
                 self?.setIsEditing(to: newIsEditing)
