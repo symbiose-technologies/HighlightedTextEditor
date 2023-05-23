@@ -10,7 +10,28 @@
 import SwiftUI
 import UIKit
 import NextGrowingTextView
-
+//import RSKGrowingTextView
+//
+//public class IntrinsicHeightGrowingTextViewNEW: UIView {
+//
+//    let growingView: RSKGrowingTextView
+//    public var textView: SymUITextView { growingView.textView }
+//
+//    public init() {
+//        self.growingView = RSKGrowingTextView()
+//
+//        super.init(frame: .zero)
+//
+//        backgroundColor = .clear
+//        addSubview(growingView)
+//    }
+//
+//    @available(*, unavailable) required init?(coder _: NSCoder) {
+//        fatalError("init(coder:) has not been implemented")
+//    }
+//
+//
+//}
 
 public class IntrinsicHeightGrowingTextView: UIView {
     

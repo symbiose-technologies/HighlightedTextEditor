@@ -13,6 +13,7 @@ import Combine
 import AppKit
 #elseif os(iOS)
 import UIKit
+import RSKGrowingTextView
 #endif
 
 
@@ -28,8 +29,10 @@ open class HighlightedTextEditorCoordinator: NSObject {
     #if os(iOS)
     var selectedTextRange: UITextRange?
     var updatingUIView = false
+    var growingView: RSKGrowingTextView? = nil
+    var textView: UITextView? { growingView }
     var containerView: IntrinsicHeightGrowingTextView? = nil
-    var textView: UITextView? { containerView?.textView }
+//    var textView: UITextView? { containerView?.textView }
     #endif
     
     #if os(macOS)

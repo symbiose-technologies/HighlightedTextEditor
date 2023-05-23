@@ -9,6 +9,8 @@
 import SwiftUI
 import UIKit
 import NextGrowingTextView
+import RSKGrowingTextView
+
 import Combine
 
 public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor {
@@ -63,40 +65,37 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
         HighlightedTextEditorCoordinator(self)
     }
 
-    public func makeUIView(context: Context) -> IntrinsicHeightGrowingTextView {
-        let intrinsicGrowingTextView = IntrinsicHeightGrowingTextView()
-        let growingView = intrinsicGrowingTextView.growingView
+    public func makeUIView(context: Context) -> RSKGrowingTextView {
+        let growingView = RSKGrowingTextView()
         
-        growingView.textView.pasteItemsCallback = self.onPastedItems
-        growingView.textView.dropCallback = self.onDroppedItems
-        growingView.textView.keyboardDismissMode = .interactiveWithAccessory
-        growingView.actionHandler = context.coordinator.growingActionHandler
+        growingView.pasteItemsCallback = self.onPastedItems
+        growingView.dropCallback = self.onDroppedItems
+        growingView.keyboardDismissMode = .interactiveWithAccessory
+//        growingView.actionHandler = context.coordinator.growingActionHandler
         
-        
-        
-        growingView.configuration = .init(
-            minLines: config.iosMinLineCount,
-            maxLines: config.iosMaxLineCount,
-            isAutomaticScrollToBottomEnabled: true,
-            isFlashScrollIndicatorsEnabled: false
-        )
-        growingView.textView.delegate = context.coordinator
-        updateTextViewModifiers(growingView.textView)
+//        growingView.configuration = .init(
+//            minLines: config.iosMinLineCount,
+//            maxLines: config.iosMaxLineCount,
+//            isAutomaticScrollToBottomEnabled: true,
+//            isFlashScrollIndicatorsEnabled: false
+//        )
+        growingView.delegate = context.coordinator
+        updateTextViewModifiers(growingView)
         
         
-        context.coordinator.containerView = intrinsicGrowingTextView
+//        context.coordinator.containerView = intrinsicGrowingTextView
         
         
-        return intrinsicGrowingTextView
+        return growingView
     }
 
-    public func updateUIView(_ uiView: IntrinsicHeightGrowingTextView, context: Context) {
+    public func updateUIView(_ uiView: RSKGrowingTextView, context: Context) {
         
 //        print("NextGrowingTextView intrinsicContentSize: textView.intrinsicSize: \(uiView.textView.intrinsicContentSize) growingView.intrinsicSize: \(uiView.intrinsicContentSize)")
 //        print("NextGrowingTextView frameSize: textView.frame: \(uiView.textView.frame.size) growingView.frame.size: \(uiView.frame.size)")
         
         
-        uiView.textView.isScrollEnabled = false
+        uiView.isScrollEnabled = false
         context.coordinator.updatingUIView = true
 
         let highlightedText = HighlightedTextEditor.getHighlightedText(
@@ -104,15 +103,15 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
             highlightRules: highlightRules
         )
 
-        if let range = uiView.textView.markedTextNSRange {
-            uiView.textView.setAttributedMarkedText(highlightedText, selectedRange: range)
+        if let range = uiView.markedTextNSRange {
+            uiView.setAttributedMarkedText(highlightedText, selectedRange: range)
         } else {
-            uiView.textView.attributedText = highlightedText
+            uiView.attributedText = highlightedText
         }
-        updateTextViewModifiers(uiView.textView)
-        runIntrospect(uiView.textView)
-        uiView.textView.isScrollEnabled = true
-        uiView.textView.selectedTextRange = context.coordinator.selectedTextRange
+        updateTextViewModifiers(uiView)
+        runIntrospect(uiView)
+        uiView.isScrollEnabled = true
+        uiView.selectedTextRange = context.coordinator.selectedTextRange
         context.coordinator.updatingUIView = false
     }
 
