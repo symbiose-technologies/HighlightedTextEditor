@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UniformTypeIdentifiers
 
 #if os(macOS)
 import AppKit
@@ -89,6 +90,13 @@ public struct HighlightRule {
 internal protocol HighlightingTextEditor {
     var text: String { get set }
     var highlightRules: [HighlightRule] { get }
+    var currentSelection: [NSRange] { get set }
+    var currentSelectionFirst: NSRange? { get }
+}
+extension HighlightingTextEditor {
+    var currentSelectionFirst: NSRange? {
+        self.currentSelection.first
+    }
 }
 
 public typealias OnSelectionChangeCallback = ([NSRange]) -> Void
@@ -96,7 +104,12 @@ public typealias IntrospectCallback = (_ editor: HighlightedTextEditor.Internals
 public typealias EmptyCallback = () -> Void
 public typealias OnCommitCallback = EmptyCallback
 public typealias OnEditingChangedCallback = EmptyCallback
-public typealias OnTextChangeCallback = (_ editorContent: String) -> Void
+public typealias OnTextChangeCallback = (_ editorContent: String, _ currentRange: NSRange?) -> Void
+public typealias OnPastedContentCallback = ([ImageRepresentable], [URL]) -> Bool
+public typealias OnDroppedContentCallback = ([ImageRepresentable], [URL]) -> Bool
+public typealias OnPastedItemsCallback = ([NSItemProvider]) -> Bool
+public typealias OnDroppedItemsCallback = ([NSItemProvider]) -> Bool
+public typealias AcceptableDroppedItems = [UTType]
 
 extension HighlightingTextEditor {
     var placeholderFont: SystemColorAlias { SystemColorAlias() }
