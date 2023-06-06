@@ -23,24 +23,30 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
         self.id = id
     }
     
-    /**
-     Whether or not the rich text is currently being edited.
-     */
-    @Published
-    public var isEditingText = false
+    public var isEditingText: Bool { isEditingTextPub.value }
+    
+    let isEditingTextPub = CurrentValueSubject<Bool, Never>(false)
+    
+    
+    public func setEditingActive(isActive: Bool) {
+        if isActive {
+            self.startEditingText()
+        } else {
+            self.stopEditingText()
+        }
+    }
     
     
     public func stopEditingText() {
-//        isEditingText = false
-        if isEditingText {
-            isEditingText = false
+        if isEditingTextPub.value {
+            isEditingTextPub.send(false)
         }
     }
     
     
     public func startEditingText() {
-        if !isEditingText {
-            isEditingText = true
+        if !isEditingTextPub.value {
+            isEditingTextPub.send(true)
         }
     }
     

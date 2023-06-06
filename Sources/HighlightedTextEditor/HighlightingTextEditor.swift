@@ -150,7 +150,7 @@ extension HighlightingTextEditor {
                 }
             }
         }
-
+        
         return highlightedString
     }
 }

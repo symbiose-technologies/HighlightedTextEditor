@@ -80,6 +80,7 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
 //            isFlashScrollIndicatorsEnabled: false
 //        )
         growingView.delegate = context.coordinator
+        context.coordinator.growingView = growingView
         updateTextViewModifiers(growingView)
         
         
@@ -134,7 +135,7 @@ extension HighlightedTextEditorCoordinator: UITextViewDelegate {
     func updateTextViewHeight(_ newHeight: CGFloat) {
         guard let container = containerView else { return }
 //            container.contentHeight = newHeight
-        UIView.animate(withDuration: 1.0) {
+        UIView.animate(withDuration: 0.25) {
 //                container.frame = containerNewFrame
             container.contentHeight = newHeight
         }
@@ -171,21 +172,26 @@ extension HighlightedTextEditorCoordinator: UITextViewDelegate {
     }
 
     public func textViewDidBeginEditing(_ textView: UITextView) {
-        if !context.isEditingText {
-            DispatchQueue.main.async { [weak self] in
-                
-                self?.context.isEditingText = true
-            }
-        }
+//        if !context.isEditingText {
+//            DispatchQueue.main.async { [weak self] in
+//                
+//                self?.context.isEditingText = true
+//            }
+//        }
+        context.setEditingActive(isActive: true)
+        
         parent.onEditingChanged?()
     }
 
     public func textViewDidEndEditing(_ textView: UITextView) {
-        if context.isEditingText {
-            DispatchQueue.main.async { [weak self] in
-                self?.context.isEditingText = false
-            }
-        }
+//        if context.isEditingText {
+//            DispatchQueue.main.async { [weak self] in
+//                self?.context.isEditingText = false
+//            }
+//        }
+//
+        context.setEditingActive(isActive: false)
+        
         parent.onCommit?()
     }
     public func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {

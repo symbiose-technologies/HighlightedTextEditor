@@ -86,10 +86,14 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
             text: text,
             highlightRules: highlightRules
         )
-
-        view.attributedText = highlightedText
+        if view.attributedText != highlightedText {
+            view.attributedText = highlightedText
+        }
         runIntrospect(view)
-        view.selectedRanges = context.coordinator.selectedRanges
+        if view.selectedRanges != context.coordinator.selectedRanges {
+            view.selectedRanges = context.coordinator.selectedRanges
+        }
+        
         view.textView.typingAttributes = typingAttributes
         context.coordinator.updatingNSView = false
     }
@@ -154,7 +158,7 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
 }
 
 public extension HighlightedTextEditor {
-    public class ScrollableTextView: NSView {
+    class ScrollableTextView: NSView {
         weak var delegate: NSTextViewDelegate?
 
         var attributedText: NSAttributedString {

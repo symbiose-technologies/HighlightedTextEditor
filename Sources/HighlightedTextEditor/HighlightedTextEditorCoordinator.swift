@@ -31,7 +31,8 @@ open class HighlightedTextEditorCoordinator: NSObject {
     var updatingUIView = false
     var growingView: RSKGrowingTextView? = nil
     var textView: UITextView? { growingView }
-    var containerView: IntrinsicHeightGrowingTextView? = nil
+    
+    var containerView: IntrinsicHeightGrowingTextView? = nil //not used alongside the rskgrowingtextview
 //    var textView: UITextView? { containerView?.textView }
     #endif
     
@@ -49,24 +50,23 @@ open class HighlightedTextEditorCoordinator: NSObject {
         self.displayConfig = parent.config
         super.init()
         
-//        self.subscribeToContextChanges()
+        self.subscribeToContextChanges()
     }
-    
-    
     
     func subscribeToContextChanges() {
         
-        context.$isEditingText
+        context.isEditingTextPub
             //skip the first 4 published events
-            .dropFirst(4)
+//            .dropFirst(4)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] newIsEditing in
+                print("context.isEditingText: \(newIsEditing)")
                 self?.setIsEditing(to: newIsEditing)
             }
             .store(in: &cancellables)
     }
     
-    private func setIsEditing(to newValue: Bool) {
+    func setIsEditing(to newValue: Bool) {
         guard let textView = self.textView else { return }
         
         if newValue == textView.isFirstResponder { return }
@@ -80,8 +80,8 @@ open class HighlightedTextEditorCoordinator: NSObject {
             #if os(iOS)
             textView.resignFirstResponder()
             #elseif os(macOS)
-//            print("Skipping resignFirstResponder for mac")
-            textView.resignFirstResponder()
+            textView.window?.makeFirstResponder(nil)
+            
             #endif
         }
     }
