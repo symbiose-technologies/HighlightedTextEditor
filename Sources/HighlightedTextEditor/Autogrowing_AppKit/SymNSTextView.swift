@@ -16,13 +16,17 @@ open class SymNSTextView: NSTextView {
      Paste the current pasteboard content into the text view.
      */
     
-//    open override var frame: CGRect {
-//        didSet {
-////            backgroundColor = .clear
-//            backgroundColor = .yellow
-//            drawsBackground = true
-//        }
-//    }
+    open override var frame: CGRect {
+        didSet {
+            let newSize = self.frame.size
+            if oldValue.size != newSize {
+                self.sizeChangeCb?(newSize)
+            }
+        }
+    }
+    
+    public var sizeChangeCb: ((CGSize) -> Void)?
+
     
     var onPastedContent: OnPastedContentCallback?
     var onDroppedContent: OnDroppedContentCallback?

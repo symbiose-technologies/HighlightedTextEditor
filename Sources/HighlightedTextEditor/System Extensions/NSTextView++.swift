@@ -21,6 +21,24 @@ public extension SymNSTextView {
         get { textContainerInset }
         set { textContainerInset = newValue }
     }
+    
+    var numberOfDisplayedLines: Int {
+        guard let layoutManager = self.layoutManager, let textContainer = self.textContainer else {
+            return 0
+        }
+        
+        var numberOfLines = 0
+        let visibleRect = self.visibleRect
+        
+        let glyphRange = layoutManager.glyphRange(forBoundingRect: visibleRect, in: textContainer)
+        layoutManager.enumerateLineFragments(forGlyphRange: glyphRange) { (rect, usedRect, textContainer, glyphRange, stop) in
+            numberOfLines += 1
+        }
+        
+        return numberOfLines
+    }
+    
+    
 }
 
 
@@ -28,6 +46,12 @@ public extension SymNSTextView {
 
 public extension SymNSTextView {
 
+    var attributedText: NSAttributedString {
+        get { attributedString() }
+        set { textStorage?.setAttributedString(newValue) }
+    }
+    
+    
     /**
      Get the rich text that is managed by the view.
      */

@@ -8,7 +8,6 @@
 
 import SwiftUI
 import UIKit
-import NextGrowingTextView
 import RSKGrowingTextView
 
 import Combine
@@ -19,18 +18,25 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
         public let scrollView: SystemScrollView?
     }
 
-    @Binding var text: String {
-        didSet {
-            onTextChange?(text, currentSelectionFirst)
-        }
+//    @Binding var text: String {
+//        didSet {
+//            onTextChange?(text, currentSelectionFirst)
+//        }
+//    }
+    
+    var text: String {
+        get { context.text }
+        set { context.setText(newValue) }
     }
+    
 
     @State var currentSelection: [NSRange] = []
     
+    var highlightRules: [HighlightRule] {
+        context.highlightRules
+    }
     
-    let highlightRules: [HighlightRule]
-    let config: HighlightedTextEditorConfig
-
+    
     private(set) var onEditingChanged: OnEditingChangedCallback?
     private(set) var onCommit: OnCommitCallback?
     private(set) var onTextChange: OnTextChangeCallback?
@@ -50,15 +56,9 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
     
     
     public init(
-        text: Binding<String>,
-        highlightRules: [HighlightRule],
-        context: HighlightedTextEditorContext,
-        config: HighlightedTextEditorConfig = .defaultConfig()
+        context: HighlightedTextEditorContext
     ) {
-        _text = text
-        self.highlightRules = highlightRules
         self.context = context
-        self.config = config
     }
 
     public func makeCoordinator() -> HighlightedTextEditorCoordinator {
@@ -66,25 +66,31 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
     }
 
     public func makeUIView(context: Context) -> RSKGrowingTextView {
+        print("[HighlightedTextEditor] makeUIView")
+        
         let growingView = RSKGrowingTextView()
+        
+        growingView.sizeChangeCb = { size in
+            self.context.setCurrentFrameSize(size)
+        }
+        
+        
+        growingView.minimumNumberOfLines = self.context.iosMinLineCount
+        growingView.maximumNumberOfLines = self.context.iosMaxLineCount
+        
         
         growingView.pasteItemsCallback = self.onPastedItems
         growingView.dropCallback = self.onDroppedItems
         growingView.keyboardDismissMode = .interactiveWithAccessory
-//        growingView.actionHandler = context.coordinator.growingActionHandler
         
-//        growingView.configuration = .init(
-//            minLines: config.iosMinLineCount,
-//            maxLines: config.iosMaxLineCount,
-//            isAutomaticScrollToBottomEnabled: true,
-//            isFlashScrollIndicatorsEnabled: false
-//        )
-        growingView.delegate = context.coordinator
+        growingView.growingTextViewDelegate = context.coordinator
+        
+        growingView.attributedText = self.context.highlightedTxt
+        
+        
         context.coordinator.growingView = growingView
         updateTextViewModifiers(growingView)
         
-        
-//        context.coordinator.containerView = intrinsicGrowingTextView
         
         
         return growingView
@@ -92,21 +98,29 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
 
     public func updateUIView(_ uiView: RSKGrowingTextView, context: Context) {
         
-//        print("NextGrowingTextView intrinsicContentSize: textView.intrinsicSize: \(uiView.textView.intrinsicContentSize) growingView.intrinsicSize: \(uiView.intrinsicContentSize)")
-//        print("NextGrowingTextView frameSize: textView.frame: \(uiView.textView.frame.size) growingView.frame.size: \(uiView.frame.size)")
-        
-        
         uiView.isScrollEnabled = false
         context.coordinator.updatingUIView = true
 
-        let highlightedText = HighlightedTextEditor.getHighlightedText(
-            text: text,
-            highlightRules: highlightRules
-        )
+        if uiView.minimumNumberOfLines != self.context.iosMinLineCount {
+            uiView.minimumNumberOfLines = self.context.iosMinLineCount
+        }
+        if uiView.maximumNumberOfLines != self.context.iosMaxLineCount {
+            uiView.maximumNumberOfLines = self.context.iosMaxLineCount
+        }
+        
+//        let highlightedText = HighlightedTextEditor.getHighlightedText(
+//            text: text,
+//            highlightRules: highlightRules
+//        )
 
+        let highlightedText = context.coordinator.context.highlightedTxt
+        
         if let range = uiView.markedTextNSRange {
-            uiView.setAttributedMarkedText(highlightedText, selectedRange: range)
+            if highlightedText != uiView.attributedString {
+                uiView.setAttributedMarkedText(highlightedText, selectedRange: range)
+            }
         } else {
+            //todo add conditional check on attrtext before adding
             uiView.attributedText = highlightedText
         }
         updateTextViewModifiers(uiView)
@@ -123,42 +137,41 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
     }
 
     private func updateTextViewModifiers(_ textView: UITextView) {
+        #if targetEnvironment(macCatalyst)
         // BUGFIX #19: https://stackoverflow.com/questions/60537039/change-prompt-color-for-uitextfield-on-mac-catalyst
         let textInputTraits = textView.value(forKey: "textInputTraits") as? NSObject
         textInputTraits?.setValue(textView.tintColor, forKey: "insertionPointColor")
+        #endif
     }
 }
 
 
-
-extension HighlightedTextEditorCoordinator: UITextViewDelegate {
-    func updateTextViewHeight(_ newHeight: CGFloat) {
-        guard let container = containerView else { return }
-//            container.contentHeight = newHeight
-        UIView.animate(withDuration: 0.25) {
-//                container.frame = containerNewFrame
-            container.contentHeight = newHeight
-        }
+extension HighlightedTextEditorCoordinator: RSKGrowingTextViewDelegate {
+  
+    public func growingTextView(_ textView: RSKGrowingTextView, didChangeHeightFrom growingTextViewHeightBegin: CGFloat, to growingTextViewHeightEnd: CGFloat) {
+        self.context.iosHeightDidChange(growingTextViewHeightBegin, to: growingTextViewHeightEnd)
         
+        self.context.setCurrentNumberOfLines(textView.numberOfLines)
+    }
+    
+    public func growingTextView(_ textView: RSKGrowingTextView, willChangeHeightFrom growingTextViewHeightBegin: CGFloat, to growingTextViewHeightEnd: CGFloat) {
+        self.context.iosHeightWillChange(growingTextViewHeightBegin, to: growingTextViewHeightEnd)
     }
     
     
-    public func growingActionHandler(_ action: NextGrowingTextView.Action) {
-//        print("[GrowingActionHandler] action: \(action)")
-        switch action {
-        case .willChangeHeight(let newHeight):
-            self.updateTextViewHeight(newHeight)
-        default:
-            return
-        }
-    }
-
     public func textViewDidChange(_ textView: UITextView) {
         // For Multistage Text Input
         guard textView.markedTextRange == nil else { return }
 
-        parent.text = textView.text
+//        parent.text = textView.text
+        
+        self.context.textDidChangeTo(textView.text)
+        
+        
+        
         selectedTextRange = textView.selectedTextRange
+
+        self.parent.onTextChange?(textView.text, parent.currentSelectionFirst)
     }
 
     public func textViewDidChangeSelection(_ textView: UITextView) {

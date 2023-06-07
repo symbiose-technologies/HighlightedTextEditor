@@ -2,7 +2,7 @@
 #if os(iOS)
 import Foundation
 import UIKit
-import NextGrowingTextView
+import RSKGrowingTextView
 
 open class SymAutogrowingTextView: SymUITextView {
 

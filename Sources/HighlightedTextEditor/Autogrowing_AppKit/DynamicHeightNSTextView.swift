@@ -14,6 +14,8 @@ open class DynamicHeightNSTextView: SymNSTextView {
     var maxHeight: CGFloat = CGFloat.greatestFiniteMagnitude
     var minHeight: CGFloat = 50.0
     
+    
+    
     override init(frame frameRect: NSRect,
                   textContainer container: NSTextContainer?) {
         
@@ -38,7 +40,11 @@ open class DynamicHeightNSTextView: SymNSTextView {
         if let scrollHeight = self.scrollViewHeight {
             NSAnimationContext.runAnimationGroup { context in
                 context.duration = 0.25
-                scrollHeight.constant = min(self.maxHeight, max(self.intrinsicContentSize.height, self.minHeight))
+                
+                let newHeight = min(self.maxHeight, max(self.intrinsicContentSize.height, self.minHeight))
+                scrollHeight.constant = newHeight
+                
+                
             }
         }
     }

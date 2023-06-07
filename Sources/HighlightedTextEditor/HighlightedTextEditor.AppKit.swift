@@ -20,18 +20,18 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
         public let textView: SystemTextView
         public let scrollView: SystemScrollView?
     }
-
-    @Binding var text: String {
-        didSet {
-            onTextChange?(text, currentSelectionFirst)
-        }
+    
+    var text: String {
+        get { context.text }
+        set { context.setText(newValue) }
     }
     
     @State var currentSelection: [NSRange] = []
     
-
-    let highlightRules: [HighlightRule]
-    let config: HighlightedTextEditorConfig
+    
+    var highlightRules: [HighlightRule] {
+        context.highlightRules
+    }
     
     private(set) var onEditingChanged: OnEditingChangedCallback?
     private(set) var onCommit: OnCommitCallback?
@@ -51,25 +51,26 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
 
     
     public init(
-        text: Binding<String>,
-        highlightRules: [HighlightRule],
-        context: HighlightedTextEditorContext,
-        config: HighlightedTextEditorConfig = .defaultConfig()
+        context: HighlightedTextEditorContext
     ) {
-        _text = text
-        self.highlightRules = highlightRules
         self.context = context
-        self.config = config
     }
-
+    
+    
     public func makeCoordinator() -> HighlightedTextEditorCoordinator {
         HighlightedTextEditorCoordinator(self)
     }
 
     public func makeNSView(context: Context) -> ScrollableTextView {
-        let textView = ScrollableTextView(self.config)
+        let textView = ScrollableTextView(self.context)
         
         textView.delegate = context.coordinator
+        
+        textView.textView.sizeChangeCb = { size in
+            self.context.setCurrentFrameSize(size)
+        }
+        
+        
         textView.textView.onPastedContent = self.onPastedContent
         textView.textView.onDroppedContent = self.onDroppedContent
         
@@ -116,11 +117,16 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
     }
 
     public func textDidBeginEditing(_ notification: Notification) {
-        guard let textView = notification.object as? NSTextView else {
-            return
-        }
+//        guard let textView = notification.object as? NSTextView else {
+//            return
+//        }
+        
+//        self.context.textDidChangeTo(textView.string)
 
-        parent.text = textView.string
+//        parent.text = textView.string
+        
+        
+        context.setEditingActive(isActive: true)
         parent.onEditingChanged?()
     }
 
@@ -128,7 +134,9 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
         guard let textView = notification.object as? NSTextView else { return }
         let content = String(textView.textStorage?.string ?? "")
 
-        parent.text = content
+        self.context.textDidChangeTo(content)
+        
+        
         selectedRanges = textView.selectedRanges
     }
 
@@ -147,12 +155,18 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
     }
 
     public func textDidEndEditing(_ notification: Notification) {
-        guard let textView = notification.object as? NSTextView else {
-            return
-        }
-
-        parent.text = textView.string
+//        guard let textView = notification.object as? NSTextView else {
+//            return
+//        }
+        
+//        parent.text = textView.string
+//        parent.onCommit?()
+        
+        
+        context.setEditingActive(isActive: false)
+        
         parent.onCommit?()
+        
     }
     
 }
@@ -177,7 +191,6 @@ public extension HighlightedTextEditor {
             }
         }
 
-        var displayConfig: HighlightedTextEditorConfig
         
         
         
@@ -195,7 +208,7 @@ public extension HighlightedTextEditor {
         }()
 
         public lazy var textView: SymNSTextView = {
-            if self.displayConfig.isAutoGrowing {
+            if self.context.dynamicHeight {
                 return self.dynamicTextView
             } else {
                 return self.vanillaTextView
@@ -255,6 +268,9 @@ public extension HighlightedTextEditor {
             layoutManager.addTextContainer(textContainer)
 
             let textView = DynamicHeightNSTextView(frame: .zero, textContainer: textContainer)
+            
+        
+            
             textView.autoresizingMask = [.width, .height]
             
             textView.delegate = self.delegate
@@ -276,9 +292,11 @@ public extension HighlightedTextEditor {
 
         // MARK: - Init
 
-        init(_ displayConfig: HighlightedTextEditorConfig) {
-            self.displayConfig = displayConfig
+        var context: HighlightedTextEditorContext
+        
+        init(_ context: HighlightedTextEditorContext) {
             self.attributedText = NSMutableAttributedString()
+            self.context = context
             super.init(frame: .zero)
         }
 
@@ -313,11 +331,11 @@ public extension HighlightedTextEditor {
 
         func setupTextView() {
             scrollView.documentView = textView
-            if self.displayConfig.isAutoGrowing,
+            if self.context.dynamicHeight,
                let dynamicHView = textView as? DynamicHeightNSTextView {
                 dynamicHView.setupDynamicHeight(scrollView: scrollView,
-                                                maxHeight: displayConfig.maxHeight,
-                                                minHeight: displayConfig.minHeight)
+                                                maxHeight: context.expMaxHeight,
+                                                minHeight: context.expMinHeight)
             }
         }
     }

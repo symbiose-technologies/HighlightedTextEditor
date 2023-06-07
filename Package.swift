@@ -15,14 +15,14 @@ public let package = Package(
         )
     ],
     dependencies: [
-        .package(url: "https://github.com/symbiose-technologies/NextGrowingTextView", branch: "symbiose"),
+//        .package(url: "https://github.com/symbiose-technologies/NextGrowingTextView", branch: "symbiose"),
         .package(url: "https://github.com/symbiose-technologies/RSKGrowingTextView.git", branch: "symbiose")
     ],
     targets: [
         .target(
             name: "HighlightedTextEditor",
             dependencies: [
-                .product(name: "NextGrowingTextView", package: "NextGrowingTextView"),
+//                .product(name: "NextGrowingTextView", package: "NextGrowingTextView"),
                 .product(name: "RSKGrowingTextView", package: "RSKGrowingTextView")
             ]
         )

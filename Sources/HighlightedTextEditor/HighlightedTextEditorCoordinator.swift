@@ -21,7 +21,6 @@ open class HighlightedTextEditorCoordinator: NSObject {
     
     var parent: HighlightedTextEditor
 
-    var displayConfig: HighlightedTextEditorConfig
     var context: HighlightedTextEditorContext
     
     var cancellables: Set<AnyCancellable> = []
@@ -31,9 +30,6 @@ open class HighlightedTextEditorCoordinator: NSObject {
     var updatingUIView = false
     var growingView: RSKGrowingTextView? = nil
     var textView: UITextView? { growingView }
-    
-    var containerView: IntrinsicHeightGrowingTextView? = nil //not used alongside the rskgrowingtextview
-//    var textView: UITextView? { containerView?.textView }
     #endif
     
     #if os(macOS)
@@ -47,11 +43,14 @@ open class HighlightedTextEditorCoordinator: NSObject {
     init(_ parent: HighlightedTextEditor) {
         self.parent = parent
         self.context = parent.context
-        self.displayConfig = parent.config
         super.init()
         
         self.subscribeToContextChanges()
+        
+        
     }
+    
+    
     
     func subscribeToContextChanges() {
         
@@ -64,6 +63,17 @@ open class HighlightedTextEditorCoordinator: NSObject {
                 self?.setIsEditing(to: newIsEditing)
             }
             .store(in: &cancellables)
+        
+        
+        context
+            .$highlightedTxt
+            .receive(on: DispatchQueue.main)
+            .sink { newAttrString in
+                guard let textView = self.textView else { return }
+                textView.attributedText = newAttrString
+            }
+            .store(in: &cancellables)
+        
     }
     
     func setIsEditing(to newValue: Bool) {

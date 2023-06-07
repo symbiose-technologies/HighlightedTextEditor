@@ -111,6 +111,7 @@ public typealias OnPastedItemsCallback = ([NSItemProvider]) -> Bool
 public typealias OnDroppedItemsCallback = ([NSItemProvider]) -> Bool
 public typealias AcceptableDroppedItems = [UTType]
 
+
 extension HighlightingTextEditor {
     var placeholderFont: SystemColorAlias { SystemColorAlias() }
 
