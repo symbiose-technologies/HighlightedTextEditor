@@ -39,6 +39,9 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     
     let isEditingTextPub = CurrentValueSubject<Bool, Never>(false)
     
+    //source of truth
+    public let resolvedIsEditingPub = CurrentValueSubject<Bool, Never>(false)
+    
     let willChangeHeightPub = PassthroughSubject<HeightChangeEvent, Never>()
     let didChangeHeightPub = PassthroughSubject<HeightChangeEvent, Never>()
     
@@ -152,7 +155,7 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
             .sink { finalHighlightedTxt in
                 //set the published
                 self.highlightedTxt = finalHighlightedTxt
-                print("\n\n \(finalHighlightedTxt) \n\nCurrent line count: \(self.lineCount)")
+//                print("\n\n \(finalHighlightedTxt) \n\nCurrent line count: \(self.lineCount)")
             }
             .store(in: &cancellables)
     }
@@ -174,7 +177,7 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     }
     
     public func setCurrentNumberOfLines(_ num: Int) {
-        print("setting line count to \(num)")
+//        print("setting line count to \(num)")
         self.lineCountPub.send(num)
     }
     
@@ -214,8 +217,13 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
         self.rawTextChangePub.send(newText)
     }
     
+    //called by the coordinator AFTER making the editor active/inactive
+    public func didMakeActive(isActive: Bool) {
+        self.resolvedIsEditingPub.send(isActive)
+    }
     
     
+    //called to SET the active/inactive state of the editor
     public func setEditingActive(isActive: Bool) {
         if isActive {
             self.startEditingText()
@@ -226,14 +234,14 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     
     
     public func stopEditingText() {
-        if isEditingTextPub.value {
+        if resolvedIsEditingPub.value {
             isEditingTextPub.send(false)
         }
     }
     
     
     public func startEditingText() {
-        if !isEditingTextPub.value {
+        if !resolvedIsEditingPub.value {
             isEditingTextPub.send(true)
         }
     }

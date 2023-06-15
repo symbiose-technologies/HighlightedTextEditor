@@ -32,22 +32,54 @@ open class DynamicHeightNSTextView: SymNSTextView {
         return modifiedSize
     }
     
-    open override func didChangeText() {
-        super.didChangeText()
-        
+//    open override var attributedText: NSAttributedString {
+//
+//    }
+    
+    open override var attributedText: NSAttributedString {
+        didSet {
+//            print("[DynamicHeightNSTextView] didSet attributedText")
+            self.syncHeight(animated: false)
+        }
+    }
+    
+    func syncHeight(animated: Bool) {
+//        print("[DynamicHeightNSTextView] syncHeight animated: \(animated)")
+
         self.invalidateIntrinsicContentSize()
-        
+               
         if let scrollHeight = self.scrollViewHeight {
-            NSAnimationContext.runAnimationGroup { context in
-                context.duration = 0.25
-                
-                let newHeight = min(self.maxHeight, max(self.intrinsicContentSize.height, self.minHeight))
+            let newHeight = min(self.maxHeight, max(self.intrinsicContentSize.height, self.minHeight))
+            
+            if animated {
+                NSAnimationContext.runAnimationGroup { context in
+                    context.duration = 0.1
+                    scrollHeight.constant = newHeight
+                }
+//                NSAnimationContext.current.duration = 0.25
+//                scrollHeight.animator().constant = newHeight
+            } else {
                 scrollHeight.constant = newHeight
-                
-                
             }
         }
     }
+    
+    
+    open override func didChangeText() {
+//        print("[DynamicHeightNSTextView] didChangeText")
+        super.didChangeText()
+        
+        self.invalidateIntrinsicContentSize()
+               
+//        if let scrollHeight = self.scrollViewHeight {
+//            let newHeight = min(self.maxHeight, max(self.intrinsicContentSize.height, self.minHeight))
+//            NSAnimationContext.current.duration = 0.25
+//            scrollHeight.animator().constant = newHeight
+//        }
+        
+    }
+    
+    
     
     
     override init(frame frameRect: NSRect) {

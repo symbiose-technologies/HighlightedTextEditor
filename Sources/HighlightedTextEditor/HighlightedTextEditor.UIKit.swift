@@ -66,7 +66,7 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
     }
 
     public func makeUIView(context: Context) -> RSKGrowingTextView {
-        print("[HighlightedTextEditor] makeUIView")
+//        print("[HighlightedTextEditor] makeUIView")
         
         let growingView = RSKGrowingTextView()
         
@@ -207,6 +207,46 @@ extension HighlightedTextEditorCoordinator: RSKGrowingTextViewDelegate {
         
         parent.onCommit?()
     }
+    
+//    @available(iOS 16.0, *)
+//    public func textView(_ textView: UITextView,
+//                         editMenuForTextIn range: NSRange,
+//                         suggestedActions: [UIMenuElement]) -> UIMenu? {
+//        var additionalActions: [UIMenuElement] = []
+//        if range.length > 0 {
+//            let highlightAction = UIAction(title: "Highlight", image: UIImage(systemName: "highlighter")) { action in
+//                // The highlight action.
+//                print("highlight")
+//            }
+//            additionalActions.append(highlightAction)
+//        }
+//        let addBookmarkAction = UIAction(title: "Add Bookmark", image: UIImage(systemName: "bookmark")) { action in
+//            // The bookmark action.
+//            print("add bookmark")
+//
+//        }
+//        additionalActions.append(addBookmarkAction)
+//        return UIMenu(children: suggestedActions + additionalActions)
+//    }
+    
+    @available(iOS 16.0, *)
+    public func textView(
+        _ textView: UITextView,
+        willDismissEditMenuWith animator: UIEditMenuInteractionAnimating
+    ) {
+        print("[textView] willDismissEditMenuWith")
+    }
+    
+    @available(iOS 16.0, *)
+    public func textView(
+        _ textView: UITextView,
+        willPresentEditMenuWith animator: UIEditMenuInteractionAnimating
+    ){
+        print("[textView] didDismissEditMenuWith")
+    }
+    
+    
+    
     public func textView(_ textView: UITextView, shouldInteractWith URL: URL, in characterRange: NSRange, interaction: UITextItemInteraction) -> Bool {
         return true
     }

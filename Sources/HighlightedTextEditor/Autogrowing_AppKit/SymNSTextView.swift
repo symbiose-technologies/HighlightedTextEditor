@@ -31,7 +31,14 @@ open class SymNSTextView: NSTextView {
     var onPastedContent: OnPastedContentCallback?
     var onDroppedContent: OnDroppedContentCallback?
     
+    open var attributedText: NSAttributedString {
+        get { attributedString() }
+        set {
+            textStorage?.setAttributedString(newValue)
+        }
+    }
     
+
     
     open override func paste(_ sender: Any?) {
         let pasteboard = NSPasteboard.general
@@ -184,6 +191,37 @@ open class SymNSTextView: NSTextView {
             location: max(0, min(length-1, range.location)),
             length: min(range.length, max(0, length - range.location)))
     }
+    
+    
+    
+
+    open override func menu(for event: NSEvent) -> NSMenu? {
+       let menu = super.menu(for: event)
+
+       let selectedRange = self.selectedRange()
+       if selectedRange.length > 0 {
+           let highlightAction = NSMenuItem(title: "Highlight", action: #selector(highlightAction(_:)), keyEquivalent: "")
+           highlightAction.target = self
+           menu?.addItem(highlightAction)
+       }
+
+       let addBookmarkAction = NSMenuItem(title: "Add Bookmark", action: #selector(addBookmarkAction(_:)), keyEquivalent: "")
+       addBookmarkAction.target = self
+       menu?.addItem(addBookmarkAction)
+
+       return menu
+   }
+
+   @objc func highlightAction(_ sender: Any) {
+       // Highlight action
+       print("highlight")
+   }
+
+   @objc func addBookmarkAction(_ sender: Any) {
+       // Add bookmark action
+       print("add bookmark")
+   }
+    
 }
 
 

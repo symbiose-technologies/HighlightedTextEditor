@@ -33,8 +33,10 @@ open class HighlightedTextEditorCoordinator: NSObject {
     #endif
     
     #if os(macOS)
+    var selectedRange: NSRange? = nil
     var selectedRanges: [NSValue] = []
     var updatingNSView = false
+    var setSelectedRangeBlock = false
     var scrollableTextView: HighlightedTextEditor.ScrollableTextView? = nil
     var textView: SymNSTextView? { scrollableTextView?.textView }
     #endif
@@ -47,7 +49,6 @@ open class HighlightedTextEditorCoordinator: NSObject {
         
         self.subscribeToContextChanges()
         
-        
     }
     
     
@@ -59,7 +60,7 @@ open class HighlightedTextEditorCoordinator: NSObject {
 //            .dropFirst(4)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] newIsEditing in
-                print("context.isEditingText: \(newIsEditing)")
+//                print("context.isEditingText: \(newIsEditing)")
                 self?.setIsEditing(to: newIsEditing)
             }
             .store(in: &cancellables)
@@ -78,7 +79,8 @@ open class HighlightedTextEditorCoordinator: NSObject {
     
     func setIsEditing(to newValue: Bool) {
         guard let textView = self.textView else { return }
-        
+//        print("setIsEditing: \(newValue) currently: \(textView.isFirstResponder)")
+        self.context.didMakeActive(isActive: newValue)
         if newValue == textView.isFirstResponder { return }
         if newValue {
             #if os(iOS)
@@ -91,9 +93,9 @@ open class HighlightedTextEditorCoordinator: NSObject {
             textView.resignFirstResponder()
             #elseif os(macOS)
             textView.window?.makeFirstResponder(nil)
-            
             #endif
         }
+        
     }
     
 }

@@ -46,11 +46,6 @@ public extension SymNSTextView {
 
 public extension SymNSTextView {
 
-    var attributedText: NSAttributedString {
-        get { attributedString() }
-        set { textStorage?.setAttributedString(newValue) }
-    }
-    
     
     /**
      Get the rich text that is managed by the view.
