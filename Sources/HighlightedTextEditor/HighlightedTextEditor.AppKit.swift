@@ -250,6 +250,8 @@ public extension HighlightedTextEditor {
             layoutManager.addTextContainer(textContainer)
 
             let textView = SymNSTextView(frame: .zero, textContainer: textContainer)
+            textView.usesAdaptiveColorMappingForDarkAppearance = true
+
             textView.autoresizingMask = .width
 //            textView.backgroundColor = NSColor.clear
             textView.delegate = self.delegate
@@ -271,7 +273,8 @@ public extension HighlightedTextEditor {
         public lazy var dynamicTextView: DynamicHeightNSTextView = {
             let contentSize = scrollView.contentSize
             let textStorage = NSTextStorage()
-
+            
+            
             let layoutManager = NSLayoutManager()
             textStorage.addLayoutManager(layoutManager)
 
@@ -288,7 +291,8 @@ public extension HighlightedTextEditor {
             layoutManager.addTextContainer(textContainer)
 
             let textView = DynamicHeightNSTextView(frame: .zero, textContainer: textContainer)
-            
+            textView.usesAdaptiveColorMappingForDarkAppearance = true
+
         
             
             textView.autoresizingMask = [.width, .height]
