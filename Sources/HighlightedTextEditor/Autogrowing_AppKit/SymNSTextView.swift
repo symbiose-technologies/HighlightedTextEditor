@@ -19,6 +19,8 @@ open class SymNSTextView: NSTextView {
     open override var frame: CGRect {
         didSet {
             let newSize = self.frame.size
+            print("new size: \(newSize) old size: \(oldValue.size)")
+            
             if oldValue.size != newSize {
                 self.sizeChangeCb?(newSize)
             }

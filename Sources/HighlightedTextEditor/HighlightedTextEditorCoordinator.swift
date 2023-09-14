@@ -66,14 +66,14 @@ open class HighlightedTextEditorCoordinator: NSObject {
             .store(in: &cancellables)
         
         
-        context
-            .$highlightedTxt
-            .receive(on: DispatchQueue.main)
-            .sink { newAttrString in
-                guard let textView = self.textView else { return }
-                textView.attributedText = newAttrString
-            }
-            .store(in: &cancellables)
+//        context
+//            .$highlightedTxt
+//            .receive(on: DispatchQueue.main)
+//            .sink { newAttrString in
+//                guard let textView = self.textView else { return }
+//                textView.attributedText = newAttrString
+//            }
+//            .store(in: &cancellables)
         
     }
     

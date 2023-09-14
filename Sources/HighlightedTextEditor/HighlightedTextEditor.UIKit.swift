@@ -91,6 +91,7 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
         context.coordinator.growingView = growingView
         updateTextViewModifiers(growingView)
         
+        runIntrospect(growingView)
         
         
         return growingView
@@ -116,9 +117,12 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
         let highlightedText = context.coordinator.context.highlightedTxt
         
         if let range = uiView.markedTextNSRange {
-            if highlightedText != uiView.attributedString {
-                uiView.setAttributedMarkedText(highlightedText, selectedRange: range)
-            }
+            uiView.setAttributedMarkedText(highlightedText, selectedRange: range)
+
+            
+//            if highlightedText != uiView.attributedString {
+//                uiView.setAttributedMarkedText(highlightedText, selectedRange: range)
+//            }
         } else {
             //todo add conditional check on attrtext before adding
             uiView.attributedText = highlightedText
@@ -164,9 +168,6 @@ extension HighlightedTextEditorCoordinator: RSKGrowingTextViewDelegate {
         guard textView.markedTextRange == nil else { return }
         
         self.context.textDidChangeTo(textView.text)
-        
-        
-        
         selectedTextRange = textView.selectedTextRange
 
         self.parent.onTextChange?(textView.text, parent.currentSelectionFirst)

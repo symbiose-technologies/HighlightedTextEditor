@@ -70,11 +70,12 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
             self.context.setCurrentFrameSize(size)
         }
         
-        
         textView.textView.onPastedContent = self.onPastedContent
         textView.textView.onDroppedContent = self.onDroppedContent
         
-        textView.textView.attributedText = self.context.highlightedTxt
+//        textView.textView.attributedText = self.context.highlightedTxt
+        textView.attributedText = self.context.getProcessedText()
+        
         
         context.coordinator.selectedRange = textView.textView.selectedRange()
         
@@ -92,11 +93,14 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
         context.coordinator.updatingNSView = true
         let typingAttributes = view.textView.typingAttributes
 
-        let highlightedText = HighlightedTextEditor.getHighlightedText(
-            text: text,
-            highlightRules: highlightRules
-        )
+//        let highlightedText = HighlightedTextEditor.getHighlightedText(
+//            text: text,
+//            highlightRules: highlightRules
+//        )
 
+        let highlightedText = self.context.getProcessedText()
+        
+        
         view.attributedText = highlightedText
         runIntrospect(view)
         view.selectedRanges = context.coordinator.selectedRanges
@@ -175,7 +179,10 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
         guard let textView = notification.object as? NSTextView else {
             return
         }
-        self.context.textDidChangeTo(textView.string)
+        
+        let content = String(textView.textStorage?.string ?? "")
+        self.context.textDidChangeTo(content)
+        
         
         context.setEditingActive(isActive: true)
         parent.onEditingChanged?()
@@ -190,12 +197,26 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
         selectedRanges = textView.selectedRanges
         
         
-        parent.onTextChange?(textView.string, selectedRange)
+        parent.onTextChange?(content, selectedRange)
         print("Text did change: \(content)")
         print("Selected range: \(String(describing: selectedRange))")
     }
-
+    
     public func textViewDidChangeSelection(_ notification: Notification) {
+        guard let textView = notification.object as? NSTextView,
+              let onSelectionChange = parent.onSelectionChange,
+              !updatingNSView,
+              let ranges = textView.selectedRanges as? [NSRange]
+        else { return }
+        selectedRanges = textView.selectedRanges
+        DispatchQueue.main.async {
+            onSelectionChange(ranges)
+        }
+        
+    }
+
+    
+    public func textViewDidChangeSelectionSymbiose(_ notification: Notification) {
 //        guard !updatingNSView else {
 //            print("[HighlightedTextEditor] AppKit textViewDidChangeSelection: ignoring due to updatingNSView being true")
 //            return
@@ -228,7 +249,6 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
         let content = String(textView.textStorage?.string ?? "")
         self.context.textDidChangeTo(content)
         
-        
         context.setEditingActive(isActive: false)
         
         parent.onCommit?()
@@ -243,7 +263,8 @@ public extension HighlightedTextEditor {
 
         var attributedText: NSAttributedString {
             didSet {
-                textView.textStorage?.setAttributedString(attributedText)
+                textView.attributedText = attributedText
+//                textView.textStorage?.setAttributedString(attributedText)
             }
         }
 
@@ -327,7 +348,7 @@ public extension HighlightedTextEditor {
             let textContainer = NSTextContainer(containerSize: scrollView.frame.size)
             textContainer.widthTracksTextView = true
             
-//            print("[DynamicHeightNSTextView] upon init contentSize: \(contentSize)")
+            print("[DynamicHeightNSTextView] upon init contentSize: \(contentSize)")
             
             textContainer.containerSize = NSSize(
                 width: contentSize.width,

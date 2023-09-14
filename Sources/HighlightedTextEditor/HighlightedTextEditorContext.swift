@@ -56,7 +56,7 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     public var currentSize: CGSize {
         currentSizePub.value
     }
-    
+//    @Published public var currentSize: CGSize = .zero
     
     public let lineCountPub =  CurrentValueSubject<Int, Never>(1)
     public var lineCount: Int {
@@ -80,12 +80,16 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     
     //this is published to upon changes from ui/nstextview delegates
     public let rawTextChangePub: CurrentValueSubject<String, Never>
-    public let highlightedTextChangePub: CurrentValueSubject<NSMutableAttributedString, Never>
     
-    @Published public var highlightedTxt: NSMutableAttributedString
+//    @Published public var highlightedTxt: NSMutableAttributedString
+    public var highlightedTxt: NSMutableAttributedString
+    
     public var text: String {
         highlightedTxt.string
     }
+    
+    @Published public var viewText: String
+    
     
     @Published public var dynamicHeight: Bool
     
@@ -115,8 +119,8 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
         
         
         self.rawTextChangePub = .init(startingText)
-        self.highlightedTextChangePub = .init(NSMutableAttributedString(string: startingText))
         self.highlightedTxt = NSMutableAttributedString(string: startingText)
+        self.viewText = startingText
         self.setupPipeline()
 //        self.rawTextChangePub.send(startingText)
     }
@@ -158,14 +162,14 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
 //            .store(in: &cancellables)
 //        
         
-        self.highlightedTextChangePub
-            .receive(on: DispatchQueue.main)
-            .sink { finalHighlightedTxt in
-                //set the published
-                self.highlightedTxt = finalHighlightedTxt
-//                print("\n\n \(finalHighlightedTxt) \n\nCurrent line count: \(self.lineCount)")
-            }
-            .store(in: &cancellables)
+//        self.highlightedTextChangePub
+//            .receive(on: DispatchQueue.main)
+//            .sink { finalHighlightedTxt in
+//                //set the published
+//                self.highlightedTxt = finalHighlightedTxt
+////                print("\n\n \(finalHighlightedTxt) \n\nCurrent line count: \(self.lineCount)")
+//            }
+//            .store(in: &cancellables)
     }
     
     private let textProcessingQueue = DispatchQueue(label: "com.symbiose.fractal.text-processing", qos: .userInitiated)
@@ -174,18 +178,18 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     
     
     private func processRawText(_ rawTxt: String) {
-        textProcessingQueue.async { [weak self] in
+        textProcessingQueue.sync { [weak self] in
             guard let self = self else { return }
             
             if self.isProcessingText {
                 self.latestRawText = rawTxt
                 return
             }
-            
             self.isProcessingText = true
             let attr = self.executeRawTextToPostHighlight(rawTxt)
             DispatchQueue.main.async {
-                self.highlightedTextChangePub.send(attr)
+//                self.highlightedTextChangePub.send(attr)
+                self.highlightedTxt = attr
             }
             
             if let latestRawText = self.latestRawText {
@@ -197,20 +201,36 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
         }
     }
     
+    func setViewText(_ rawTxt: String) {
+        self.viewText = rawTxt
+    }
+    func getProcessedText() -> NSMutableAttributedString {
+        let attr = self.executeRawTextToPostHighlight(self.viewText)
+        self.highlightedTxt = attr
+        return attr
+    }
+    
+    func processUpdatedText(_ rawTxt: String) -> NSMutableAttributedString {
+        let attr = self.executeRawTextToPostHighlight(rawTxt)
+        return attr
+    }
     
     public func setText(_ rawTxt: String, skipTransforms: Bool = false) {
         if skipTransforms {
             let attr = NSMutableAttributedString(string: rawTxt)
-            self.highlightedTextChangePub.send(attr)
+            self.viewText = rawTxt
+            self.highlightedTxt = attr
             
         } else {
+            self.viewText = rawTxt
             let attr = self.executeRawTextToPostHighlight(rawTxt)
-            self.highlightedTextChangePub.send(attr)
+            self.highlightedTxt = attr
         }
         
     }
     
     public func setCurrentFrameSize(_ size: CGSize) {
+//        self.currentSize = size
         self.currentSizePub.send(size)
     }
     
@@ -220,17 +240,20 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     }
     
     
-    private func executeRawTextToPostHighlight(_ rawTxt: String) -> NSMutableAttributedString {
+    
+    func executeRawTextToPostHighlight(_ rawTxt: String) -> NSMutableAttributedString {
         let preHighlight = self.executePreHighlightTransform(rawTxt)
         let highlighted = HighlightedTextEditor.getHighlightedText(
             text: preHighlight,
-            highlightRules: self.highlightRules)
+            highlightRules: self.highlightRules
+        )
         let postHighlighted = self.executePostHighlightTransform(highlighted)
         return postHighlighted
     }
     
     
-    private func executePreHighlightTransform(_ rawTxt: String) -> String {
+    @inlinable
+    func executePreHighlightTransform(_ rawTxt: String) -> String {
         guard self.processors.count > 0 else { return rawTxt }
         var txt = rawTxt
         for processor in processors {
@@ -240,7 +263,8 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     }
     
     
-    private func executePostHighlightTransform(_ rawHighlighted: NSMutableAttributedString) -> NSMutableAttributedString {
+    @inlinable
+    func executePostHighlightTransform(_ rawHighlighted: NSMutableAttributedString) -> NSMutableAttributedString {
         guard self.processors.count > 0 else { return rawHighlighted }
         var highlighted = rawHighlighted
         for processor in processors {
@@ -254,7 +278,8 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     
     //called by the ui/nstextview delegate
     public func textDidChangeTo(_ newText: String) {
-        self.rawTextChangePub.send(newText)
+        self.setViewText(newText)
+//        self.rawTextChangePub.send(newText)
     }
     
     //called by the coordinator AFTER making the editor active/inactive
