@@ -79,7 +79,7 @@ open class HighlightedTextEditorCoordinator: NSObject {
     
     func setIsEditing(to newValue: Bool) {
         guard let textView = self.textView else { return }
-//        print("setIsEditing: \(newValue) currently: \(textView.isFirstResponder)")
+        print("setIsEditing: \(newValue) currently: \(textView.isFirstResponder)")
         self.context.didMakeActive(isActive: newValue)
         if newValue == textView.isFirstResponder { return }
         if newValue {

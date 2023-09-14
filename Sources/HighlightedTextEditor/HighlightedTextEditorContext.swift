@@ -140,15 +140,23 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
             .store(in: &cancellables)
         
         self.rawTextChangePub
-        //todo on a bg thread / off the main thread
-            .map { rawTxt in
-                return self.executeRawTextToPostHighlight(rawTxt)
-            }
-            .sink { highlightTxt in
-                self.highlightedTextChangePub.send(highlightTxt)
+            .sink { [weak self] rawTxt in
+                self?.processRawText(rawTxt)
             }
             .store(in: &cancellables)
         
+        
+//        self.rawTextChangePub
+//        //todo on a bg thread / off the main thread
+//            .map { rawTxt in
+////                return self.executeRawTextToPostHighlight(rawTxt)
+//                self.processRawText(rawTxt)
+//            }
+//            .sink { highlightTxt in
+//                self.highlightedTextChangePub.send(highlightTxt)
+//            }
+//            .store(in: &cancellables)
+//        
         
         self.highlightedTextChangePub
             .receive(on: DispatchQueue.main)
@@ -159,6 +167,36 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
             }
             .store(in: &cancellables)
     }
+    
+    private let textProcessingQueue = DispatchQueue(label: "com.symbiose.fractal.text-processing", qos: .userInitiated)
+    private var isProcessingText: Bool = false
+    private var latestRawText: String?
+    
+    
+    private func processRawText(_ rawTxt: String) {
+        textProcessingQueue.async { [weak self] in
+            guard let self = self else { return }
+            
+            if self.isProcessingText {
+                self.latestRawText = rawTxt
+                return
+            }
+            
+            self.isProcessingText = true
+            let attr = self.executeRawTextToPostHighlight(rawTxt)
+            DispatchQueue.main.async {
+                self.highlightedTextChangePub.send(attr)
+            }
+            
+            if let latestRawText = self.latestRawText {
+                self.latestRawText = nil
+                self.processRawText(latestRawText)
+            }
+            
+            self.isProcessingText = false
+        }
+    }
+    
     
     public func setText(_ rawTxt: String, skipTransforms: Bool = false) {
         if skipTransforms {
@@ -200,6 +238,8 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
         }
         return txt
     }
+    
+    
     private func executePostHighlightTransform(_ rawHighlighted: NSMutableAttributedString) -> NSMutableAttributedString {
         guard self.processors.count > 0 else { return rawHighlighted }
         var highlighted = rawHighlighted

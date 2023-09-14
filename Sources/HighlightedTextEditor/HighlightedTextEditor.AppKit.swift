@@ -83,10 +83,28 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
 //            textView.window?.makeFirstResponder(textView)
 //        }
         
+        runIntrospect(textView)
+        
         return textView
     }
-
+    
     public func updateNSView(_ view: ScrollableTextView, context: Context) {
+        context.coordinator.updatingNSView = true
+        let typingAttributes = view.textView.typingAttributes
+
+        let highlightedText = HighlightedTextEditor.getHighlightedText(
+            text: text,
+            highlightRules: highlightRules
+        )
+
+        view.attributedText = highlightedText
+        runIntrospect(view)
+        view.selectedRanges = context.coordinator.selectedRanges
+        view.textView.typingAttributes = typingAttributes
+        context.coordinator.updatingNSView = false
+    }
+
+    public func updateNSViewSymbiose(_ view: ScrollableTextView, context: Context) {
         context.coordinator.updatingNSView = true
         
         let typingAttributes = view.textView.typingAttributes
@@ -105,17 +123,24 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
         let newSelectedRange = NSMakeRange(adjustedCursorPosition, 0)
         
         if textIsDifferent {
-            //            view.textView.textStorage?.beginEditing()
             DispatchQueue.main.async {
-//                print("[HighlightedTextEditor] AppKit updating textStorage newCursorPos: \(adjustedCursorPosition) oldCursorPos: \(cursorPosition.location)")
+                view.textView.textStorage?.beginEditing()
+                print("[HighlightedTextEditor] AppKit updating textStorage newCursorPos: \(adjustedCursorPosition) oldCursorPos: \(cursorPosition.location)")
                 context.coordinator.setSelectedRangeBlock = true
                 view.textView.attributedText = highlightedText
                 view.textView.typingAttributes = typingAttributes
                 context.coordinator.setSelectedRangeBlock = false
-                if adjustedCursorPosition != highlightedText.string.count {
-                    view.textView.setSelectedRange(newSelectedRange)
-                }
-//                print("[HighlightedTextEditor] AppKit setting selected range!")
+                
+                print("[HighlightedTextEditor] AppKit setting selected range!")
+                view.textView.setSelectedRange(newSelectedRange)
+
+                
+                
+//                if adjustedCursorPosition != highlightedText.string.count {
+//                    print("[HighlightedTextEditor] AppKit setting selected range!")
+//                    view.textView.setSelectedRange(newSelectedRange)
+//                }
+                view.textView.textStorage?.endEditing()
             }
         }
             
@@ -129,6 +154,10 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
         guard let introspect = introspect else { return }
         let internals = Internals(textView: view.textView, scrollView: view.scrollView)
         introspect(internals)
+        
+        view.textView.onPastedContent = self.onPastedContent
+        view.textView.onDroppedContent = self.onDroppedContent
+        
     }
 }
 
@@ -143,6 +172,11 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
     }
 
     public func textDidBeginEditing(_ notification: Notification) {
+        guard let textView = notification.object as? NSTextView else {
+            return
+        }
+        self.context.textDidChangeTo(textView.string)
+        
         context.setEditingActive(isActive: true)
         parent.onEditingChanged?()
     }
@@ -157,29 +191,44 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
         
         
         parent.onTextChange?(textView.string, selectedRange)
-        
+        print("Text did change: \(content)")
+        print("Selected range: \(String(describing: selectedRange))")
     }
 
     public func textViewDidChangeSelection(_ notification: Notification) {
-        guard !setSelectedRangeBlock else {
+//        guard !updatingNSView else {
 //            print("[HighlightedTextEditor] AppKit textViewDidChangeSelection: ignoring due to updatingNSView being true")
+//            return
+//        }
+
+        guard !setSelectedRangeBlock else {
+            print("[HighlightedTextEditor] AppKit textViewDidChangeSelection: ignoring due to updatingNSView being true")
             return
         }
         
         guard let textView = notification.object as? NSTextView else { return }
         
         let currentSelectedRange = textView.selectedRange()
-//        print("[HighlightedTextEditor] AppKit textViewDidChangeSelection to: \(currentSelectedRange) from previous: \(self.selectedRange ?? NSRange(location: -1, length: -1))")
+        print("[HighlightedTextEditor] AppKit textViewDidChangeSelection to: \(currentSelectedRange) from previous: \(self.selectedRange ?? NSRange(location: -1, length: -1))")
         self.selectedRange = currentSelectedRange
         self.selectedRanges = textView.selectedRanges
         
 //        self.parent.currentSelection = [currentSelectedRange]
-        parent.onSelectionChange?([currentSelectedRange])
+        DispatchQueue.main.async { [weak self] in
+            self?.parent.onSelectionChange?([currentSelectedRange])
+        }
 
         
     }
 
     public func textDidEndEditing(_ notification: Notification) {
+        guard let textView = notification.object as? NSTextView else {
+            return
+        }
+        let content = String(textView.textStorage?.string ?? "")
+        self.context.textDidChangeTo(content)
+        
+        
         context.setEditingActive(isActive: false)
         
         parent.onCommit?()
@@ -203,13 +252,10 @@ public extension HighlightedTextEditor {
                 guard selectedRanges.count > 0 else {
                     return
                 }
-                
                 textView.selectedRanges = selectedRanges
             }
         }
 
-        
-        
         
         public lazy var scrollView: NSScrollView = {
             let scrollView = NSScrollView()

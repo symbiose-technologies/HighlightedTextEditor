@@ -162,8 +162,6 @@ extension HighlightedTextEditorCoordinator: RSKGrowingTextViewDelegate {
     public func textViewDidChange(_ textView: UITextView) {
         // For Multistage Text Input
         guard textView.markedTextRange == nil else { return }
-
-//        parent.text = textView.text
         
         self.context.textDidChangeTo(textView.text)
         

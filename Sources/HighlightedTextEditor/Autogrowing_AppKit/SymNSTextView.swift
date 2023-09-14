@@ -38,7 +38,11 @@ open class SymNSTextView: NSTextView {
         }
     }
     
+//    open override var readablePasteboardTypes: [NSPasteboard.PasteboardType] {
+//        return super.readablePasteboardTypes + [NSPasteboard.PasteboardType.tiff]
+//    }
 
+    
     
     open override func paste(_ sender: Any?) {
         let pasteboard = NSPasteboard.general
@@ -58,9 +62,33 @@ open class SymNSTextView: NSTextView {
     }
 
     open func receiveContents(_ pasteboard: NSPasteboard, isPaste: Bool) -> Bool {
+        var objectsAndTypes: [NSPasteboard.PasteboardType: Any] = [:]
+           
+        for type in pasteboard.types ?? [] {
+            if let data = pasteboard.data(forType: type) {
+                // You can interpret the data based on the type here
+                // For example, you might convert it to a string or image based on known types
+                // For this example, we'll just store the raw data
+                objectsAndTypes[type] = data
+            }
+        }
+        for (type, object) in objectsAndTypes {
+            print("Type: \(type), Object: \(object)")
+        }
+        
+        
+        
         var images: [ImageRepresentable] = []
         var files: [URL] = []
-        pasteboard.readObjects(forClasses: [NSURL.self, NSImage.self], options: nil)?.forEach { eachObject in
+        
+        
+//        if let imageData = pasteboard.data(forType: NSPasteboard.PasteboardType.tiff) {
+//            if let image = NSImage(data: imageData) {
+//                images.append(image)
+//            }
+//        }
+        
+        pasteboard.readObjects(forClasses: [NSImage.self, NSURL.self], options: nil)?.forEach { eachObject in
             if let image = eachObject as? ImageRepresentable {
                 images.append(image)
             } else if let eachURL = eachObject as? URL {
