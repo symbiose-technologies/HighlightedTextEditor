@@ -17,8 +17,11 @@ public typealias SymbolicTraits = NSFontDescriptor.SymbolicTraits
 public typealias SystemTextView = NSTextView
 public typealias SystemScrollView = NSScrollView
 
-let defaultEditorFont = NSFont.systemFont(ofSize: NSFont.systemFontSize)
+let defaultEditorFontSize: CGFloat = 16.0
+let defaultEditorFont = NSFont.systemFont(ofSize: 16.0)
+//let defaultEditorFont = NSFont.systemFont(ofSize: NSFont.systemFontSize)
 let defaultEditorTextColor = NSColor.labelColor
+
 
 #else
 import UIKit
@@ -30,6 +33,7 @@ public typealias SystemTextView = UITextView
 public typealias SystemScrollView = UIScrollView
 
 let defaultEditorFont = UIFont.preferredFont(forTextStyle: .body)
+let defaultEditorFontSize: CGFloat = 16.0
 let defaultEditorTextColor = UIColor.label
 
 #endif
@@ -88,7 +92,7 @@ public struct HighlightRule {
 }
 
 internal protocol HighlightingTextEditor {
-    var text: String { get set }
+    var text: String { get }
     var highlightRules: [HighlightRule] { get }
     var currentSelection: [NSRange] { get set }
     var currentSelectionFirst: NSRange? { get }

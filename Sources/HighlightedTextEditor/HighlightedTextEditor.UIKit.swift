@@ -25,10 +25,10 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
 //    }
     
     var text: String {
-        get { context.text }
-        set { context.setText(newValue) }
+        context.text
+//        set { context.setText(newValue) }
     }
-    
+//    
 
     @State var currentSelection: [NSRange] = []
     
@@ -85,7 +85,10 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
         
         growingView.growingTextViewDelegate = context.coordinator
         
-        growingView.attributedText = self.context.highlightedTxt
+        let highlightedText = self.context.getProcessedText()
+        growingView.attributedText = highlightedText
+
+        growingView.backgroundColor = .clear
         
         
         context.coordinator.growingView = growingView
@@ -109,28 +112,22 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
             uiView.maximumNumberOfLines = self.context.iosMaxLineCount
         }
         
-//        let highlightedText = HighlightedTextEditor.getHighlightedText(
-//            text: text,
-//            highlightRules: highlightRules
-//        )
-
-        let highlightedText = context.coordinator.context.highlightedTxt
-        
-        if let range = uiView.markedTextNSRange {
-            uiView.setAttributedMarkedText(highlightedText, selectedRange: range)
-
-            
-//            if highlightedText != uiView.attributedString {
-//                uiView.setAttributedMarkedText(highlightedText, selectedRange: range)
-//            }
-        } else {
-            //todo add conditional check on attrtext before adding
-            uiView.attributedText = highlightedText
-        }
-        updateTextViewModifiers(uiView)
+//        let highlightedText = self.context.getProcessedText()
+//
+//        if let range = uiView.markedTextNSRange {
+//            uiView.setAttributedMarkedText(highlightedText, selectedRange: range)
+//
+////            if highlightedText != uiView.attributedString {
+////                uiView.setAttributedMarkedText(highlightedText, selectedRange: range)
+////            }
+//        } else {
+//            //todo add conditional check on attrtext before adding
+//            uiView.attributedText = highlightedText
+//        }
+//        updateTextViewModifiers(uiView)
         runIntrospect(uiView)
         uiView.isScrollEnabled = true
-        uiView.selectedTextRange = context.coordinator.selectedTextRange
+//        uiView.selectedTextRange = context.coordinator.selectedTextRange
         context.coordinator.updatingUIView = false
     }
 
@@ -168,8 +165,9 @@ extension HighlightedTextEditorCoordinator: RSKGrowingTextViewDelegate {
         guard textView.markedTextRange == nil else { return }
         
         self.context.textDidChangeTo(textView.text)
+        self.syncChangesToView()
+        
         selectedTextRange = textView.selectedTextRange
-
         self.parent.onTextChange?(textView.text, parent.currentSelectionFirst)
     }
 

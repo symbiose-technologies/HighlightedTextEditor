@@ -21,10 +21,12 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
         public let scrollView: SystemScrollView?
     }
     
+    
     var text: String {
-        get { context.text }
-        set { context.setText(newValue) }
+        context.text
+//        set { context.setText(newValue) }
     }
+    
     
     @State var currentSelection: [NSRange] = []
     
@@ -62,6 +64,8 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
     }
 
     public func makeNSView(context: Context) -> ScrollableTextView {
+        print("[HighlightedTextEditor] makeNSView called")
+
         let textView = ScrollableTextView(self.context)
         
         textView.delegate = context.coordinator
@@ -75,6 +79,8 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
         
 //        textView.textView.attributedText = self.context.highlightedTxt
         textView.attributedText = self.context.getProcessedText()
+        
+        textView.textView.usesFindBar = true
         
         
         context.coordinator.selectedRange = textView.textView.selectedRange()
@@ -90,22 +96,22 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
     }
     
     public func updateNSView(_ view: ScrollableTextView, context: Context) {
-        context.coordinator.updatingNSView = true
-        let typingAttributes = view.textView.typingAttributes
-
-//        let highlightedText = HighlightedTextEditor.getHighlightedText(
-//            text: text,
-//            highlightRules: highlightRules
-//        )
-
-        let highlightedText = self.context.getProcessedText()
-        
-        
-        view.attributedText = highlightedText
+        print("[HighlightedTextEditor] updateNSView called")
+//        context.coordinator.updatingNSView = true
+//        let typingAttributes = view.textView.typingAttributes
+//
+////        let highlightedText = HighlightedTextEditor.getHighlightedText(
+////            text: text,
+////            highlightRules: highlightRules
+////        )
+//
+//        let highlightedText = self.context.getProcessedText()
+//        view.attributedText = highlightedText
         runIntrospect(view)
-        view.selectedRanges = context.coordinator.selectedRanges
-        view.textView.typingAttributes = typingAttributes
-        context.coordinator.updatingNSView = false
+//        
+//        view.selectedRanges = context.coordinator.selectedRanges
+//        view.textView.typingAttributes = typingAttributes
+//        context.coordinator.updatingNSView = false
     }
 
     public func updateNSViewSymbiose(_ view: ScrollableTextView, context: Context) {
@@ -182,7 +188,7 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
         
         let content = String(textView.textStorage?.string ?? "")
         self.context.textDidChangeTo(content)
-        
+        self.syncChangesToView()
         
         context.setEditingActive(isActive: true)
         parent.onEditingChanged?()
@@ -192,14 +198,16 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
         guard let textView = notification.object as? NSTextView else { return }
         let content = String(textView.textStorage?.string ?? "")
         self.context.textDidChangeTo(content)
+        self.syncChangesToView()
+        
         
         selectedRange = textView.selectedRange()
         selectedRanges = textView.selectedRanges
         
         
         parent.onTextChange?(content, selectedRange)
-        print("Text did change: \(content)")
-        print("Selected range: \(String(describing: selectedRange))")
+//        print("Text did change: \(content)")
+//        print("Selected range: \(String(describing: selectedRange))")
     }
     
     public func textViewDidChangeSelection(_ notification: Notification) {

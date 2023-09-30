@@ -88,11 +88,17 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
         highlightedTxt.string
     }
     
-    @Published public var viewText: String
-    
+//    @Published public var viewText: String
+    public var viewText: String { _viewText.value }
+    public var _viewText: CurrentValueSubject<String, Never>
+    public var viewTextPub: AnyPublisher<String, Never> {
+        _viewText.eraseToAnyPublisher()
+    }
     
     @Published public var dynamicHeight: Bool
     
+    private var _needsRefreshPub =  PassthroughSubject<Bool, Never>()
+    public var needsRefreshPub: AnyPublisher<Bool, Never> { _needsRefreshPub.eraseToAnyPublisher() }
     
     public init(_ startingText: String = "",
                 highlightRules: [HighlightRule] = .markdown,
@@ -120,9 +126,15 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
         
         self.rawTextChangePub = .init(startingText)
         self.highlightedTxt = NSMutableAttributedString(string: startingText)
-        self.viewText = startingText
+//        self.viewText = startingText
+        self._viewText = .init(startingText)
+        
         self.setupPipeline()
 //        self.rawTextChangePub.send(startingText)
+    }
+    
+    private func setNeedsViewRefresh() {
+        self._needsRefreshPub.send(true)
     }
     
     public func removeAllProcessors() {
@@ -201,9 +213,11 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
         }
     }
     
-    func setViewText(_ rawTxt: String) {
-        self.viewText = rawTxt
+    private func setViewText(_ rawTxt: String) {
+//        self.viewText = rawTxt
+        self._viewText.send(rawTxt)
     }
+    
     func getProcessedText() -> NSMutableAttributedString {
         let attr = self.executeRawTextToPostHighlight(self.viewText)
         self.highlightedTxt = attr
@@ -218,13 +232,18 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     public func setText(_ rawTxt: String, skipTransforms: Bool = false) {
         if skipTransforms {
             let attr = NSMutableAttributedString(string: rawTxt)
-            self.viewText = rawTxt
+            self.setViewText(rawTxt)
+//            self.viewText = rawTxt
             self.highlightedTxt = attr
+            self.setNeedsViewRefresh()
             
         } else {
-            self.viewText = rawTxt
+//            self.viewText = rawTxt
+            self.setViewText(rawTxt)
             let attr = self.executeRawTextToPostHighlight(rawTxt)
             self.highlightedTxt = attr
+            self.setNeedsViewRefresh()
+            
         }
         
     }
