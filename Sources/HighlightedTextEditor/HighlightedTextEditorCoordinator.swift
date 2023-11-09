@@ -26,15 +26,15 @@ open class HighlightedTextEditorCoordinator: NSObject {
     var cancellables: Set<AnyCancellable> = []
     
     #if os(iOS)
-    var selectedTextRange: UITextRange?
+//    var selectedTextRange: UITextRange?
     var updatingUIView = false
     var growingView: RSKGrowingTextView? = nil
     var textView: UITextView? { growingView }
     #endif
     
     #if os(macOS)
-    var selectedRange: NSRange? = nil
-    var selectedRanges: [NSValue] = []
+    var selectedRange: NSRange? { context.selectedRange }
+    var selectedRanges: [NSValue] { context.selectedRanges }
     var updatingNSView = false
     var setSelectedRangeBlock = false
     var scrollableTextView: HighlightedTextEditor.ScrollableTextView? = nil
@@ -131,21 +131,34 @@ func syncChangesToView_Platform() {
     }
     
     let highlightedText = self.context.getProcessedText()
+    var didSetContextProvidedSelectionTo: UITextRange? = nil
+    
     if let range = uiView.markedTextNSRange {
         uiView.setAttributedMarkedText(highlightedText, selectedRange: range)
     } else {
         //todo add conditional check on attrtext before adding
         uiView.attributedText = highlightedText
+        if let pendingCursorChange = context.consumePendingCursorChange() {
+            didSetContextProvidedSelectionTo = pendingCursorChange
+                .setSelectedTextRangeIn(uiView as UITextView)
+            
+        }
+    }
+    uiView.isScrollEnabled = true
+    
+    if let didSetContextProvidedSelectionTo {
+        self.context.selectedTextRange = didSetContextProvidedSelectionTo
+    } else {
+        uiView.selectedTextRange = self.context.selectedTextRange
     }
     
-    uiView.isScrollEnabled = true
-    uiView.selectedTextRange = selectedTextRange
     updatingUIView = false
 }
 #endif
     
     #if canImport(AppKit)
     func syncChangesToView_Platform() {
+        //TODO handle cursor change on macOS
         guard let view = self.textView else { return }
         self.updatingNSView = true
         let typingAttributes = view.typingAttributes
@@ -153,7 +166,7 @@ func syncChangesToView_Platform() {
         let highlightedText = self.context.getProcessedText()
         view.attributedText = highlightedText
         //runintrospect
-        view.selectedRanges = self.selectedRanges
+        view.selectedRanges = self.context.selectedRanges
         view.typingAttributes = typingAttributes
         self.updatingNSView = false
         

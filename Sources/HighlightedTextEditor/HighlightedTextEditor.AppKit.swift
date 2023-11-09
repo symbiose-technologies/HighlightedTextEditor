@@ -82,8 +82,8 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
         
         textView.textView.usesFindBar = true
         
-        
-        context.coordinator.selectedRange = textView.textView.selectedRange()
+        self.context.selectedRange = textView.textView.selectedRange()
+//        context.coordinator.selectedRange = textView.textView.selectedRange()
         
         context.coordinator.scrollableTextView = textView
 //        if context.coordinator.context.isEditingText {
@@ -200,9 +200,10 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
         self.context.textDidChangeTo(content)
         self.syncChangesToView()
         
-        
-        selectedRange = textView.selectedRange()
-        selectedRanges = textView.selectedRanges
+        self.context.selectedRange = textView.selectedRange()
+        self.context.selectedRanges = textView.selectedRanges
+//        selectedRange = textView.selectedRange()
+//        selectedRanges = textView.selectedRanges
         
         
         parent.onTextChange?(content, selectedRange)
@@ -216,7 +217,8 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
               !updatingNSView,
               let ranges = textView.selectedRanges as? [NSRange]
         else { return }
-        selectedRanges = textView.selectedRanges
+        self.context.selectedRanges = textView.selectedRanges
+//        selectedRanges = textView.selectedRanges
         DispatchQueue.main.async {
             onSelectionChange(ranges)
         }
@@ -239,8 +241,11 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
         
         let currentSelectedRange = textView.selectedRange()
         print("[HighlightedTextEditor] AppKit textViewDidChangeSelection to: \(currentSelectedRange) from previous: \(self.selectedRange ?? NSRange(location: -1, length: -1))")
-        self.selectedRange = currentSelectedRange
-        self.selectedRanges = textView.selectedRanges
+//        self.selectedRange = currentSelectedRange
+//        self.selectedRanges = textView.selectedRanges
+        
+        self.context.selectedRange = currentSelectedRange
+        self.context.selectedRanges = textView.selectedRanges
         
 //        self.parent.currentSelection = [currentSelectedRange]
         DispatchQueue.main.async { [weak self] in

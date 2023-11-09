@@ -22,6 +22,7 @@ public protocol HighlightedTextEditorProcessor {
 
 
 
+
 public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable {
     public typealias HeightChangeEvent = (CGFloat, CGFloat)
     
@@ -75,6 +76,14 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     @Published public var expMaxHeight: CGFloat
     
     
+    #if os(iOS)
+    public var selectedTextRange: UITextRange?
+    #endif
+    
+    #if os(macOS)
+    public var selectedRange: NSRange? = nil
+    public var selectedRanges: [NSValue] = []
+    #endif
     
     private(set) public var processors: [HighlightedTextEditorProcessor] = []
     
@@ -99,6 +108,15 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     
     private var _needsRefreshPub =  PassthroughSubject<Bool, Never>()
     public var needsRefreshPub: AnyPublisher<Bool, Never> { _needsRefreshPub.eraseToAnyPublisher() }
+    
+    
+    private(set) public var pendingCursorChange: CursorChangePos? = nil
+    public func consumePendingCursorChange() -> CursorChangePos? {
+        guard let change = self.pendingCursorChange else { return nil }
+        self.pendingCursorChange = nil
+        return change
+        
+    }
     
     public init(_ startingText: String = "",
                 highlightRules: [HighlightRule] = .markdown,
@@ -229,12 +247,17 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
         return attr
     }
     
-    public func setText(_ rawTxt: String, skipTransforms: Bool = false) {
+    
+    public func setText(_ rawTxt: String,
+                        skipTransforms: Bool = false,
+                        cursorChange: CursorChangePos? = nil
+    ) {
         if skipTransforms {
             let attr = NSMutableAttributedString(string: rawTxt)
             self.setViewText(rawTxt)
 //            self.viewText = rawTxt
             self.highlightedTxt = attr
+            self.pendingCursorChange = cursorChange
             self.setNeedsViewRefresh()
             
         } else {
@@ -242,6 +265,8 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
             self.setViewText(rawTxt)
             let attr = self.executeRawTextToPostHighlight(rawTxt)
             self.highlightedTxt = attr
+            
+            self.pendingCursorChange = cursorChange
             self.setNeedsViewRefresh()
             
         }

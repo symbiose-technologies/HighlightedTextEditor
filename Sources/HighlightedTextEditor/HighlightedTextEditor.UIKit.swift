@@ -66,7 +66,7 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
     }
 
     public func makeUIView(context: Context) -> RSKGrowingTextView {
-//        print("[HighlightedTextEditor] makeUIView")
+        print("[HighlightedTextEditor] makeUIView")
         
         let growingView = RSKGrowingTextView()
         
@@ -101,7 +101,8 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
     }
 
     public func updateUIView(_ uiView: RSKGrowingTextView, context: Context) {
-        
+        print("[HighlightedTextEditor] updateUIView")
+
         uiView.isScrollEnabled = false
         context.coordinator.updatingUIView = true
 
@@ -167,14 +168,14 @@ extension HighlightedTextEditorCoordinator: RSKGrowingTextViewDelegate {
         self.context.textDidChangeTo(textView.text)
         self.syncChangesToView()
         
-        selectedTextRange = textView.selectedTextRange
+        self.context.selectedTextRange = textView.selectedTextRange
         self.parent.onTextChange?(textView.text, parent.currentSelectionFirst)
     }
 
     public func textViewDidChangeSelection(_ textView: UITextView) {
         guard !updatingUIView
         else { return }
-        selectedTextRange = textView.selectedTextRange
+        self.context.selectedTextRange = textView.selectedTextRange
         self.parent.currentSelection = [textView.selectedRange]
         guard let onSelectionChange = parent.onSelectionChange else { return }
         
