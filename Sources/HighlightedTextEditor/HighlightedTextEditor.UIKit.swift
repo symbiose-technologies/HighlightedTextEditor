@@ -68,12 +68,25 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
     public func makeUIView(context: Context) -> RSKGrowingTextView {
         print("[HighlightedTextEditor] makeUIView")
         
-        let growingView = RSKGrowingTextView()
+        var growingView = RSKGrowingTextView()
+        if #available(iOS 16.0, *) {
+            growingView = RSKGrowingTextView(usingTextLayoutManager: true)
+        }
         
         growingView.sizeChangeCb = { size in
             self.context.setCurrentFrameSize(size)
         }
         
+        if let attrPlaceholder = self.context.placeholderTextAttr {
+            growingView.attributedPlaceholder = attrPlaceholder
+        } else if let placeholderStr = self.context.placeholderText {
+            let attrStr = NSAttributedString(string: placeholderStr,
+                                             attributes: [
+                                                .font: defaultEditorFont,
+                                                .foregroundColor: defaultEditorPlaceholderColor
+                                             ])
+            growingView.attributedPlaceholder = attrStr
+        }
         
         growingView.minimumNumberOfLines = self.context.iosMinLineCount
         growingView.maximumNumberOfLines = self.context.iosMaxLineCount
@@ -81,7 +94,8 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
         
         growingView.pasteItemsCallback = self.onPastedItems
         growingView.dropCallback = self.onDroppedItems
-        growingView.keyboardDismissMode = .interactiveWithAccessory
+        growingView.keyboardDismissMode = self.context.interactiveKeyboardDismissal ? .interactiveWithAccessory : .onDrag
+
         
         growingView.growingTextViewDelegate = context.coordinator
         

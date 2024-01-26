@@ -23,7 +23,7 @@ public let package = Package(
             name: "HighlightedTextEditor",
             dependencies: [
 //                .product(name: "NextGrowingTextView", package: "NextGrowingTextView"),
-                .product(name: "RSKGrowingTextView", package: "RSKGrowingTextView")
+                .product(name: "RSKGrowingTextView", package: "RSKGrowingTextView", condition: .when(platforms: [.iOS]))
             ]
         )
     ]

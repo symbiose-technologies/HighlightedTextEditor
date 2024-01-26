@@ -416,10 +416,12 @@ public extension HighlightedTextEditor {
 
             setupScrollViewConstraints()
             setupTextView()
-            
+            print("HighlightedTextEditor -- ScrollableTextView -- viewWillDraw!")
             
         }
 
+        
+        
         func setupScrollViewConstraints() {
             scrollView.translatesAutoresizingMaskIntoConstraints = false
 

@@ -9,6 +9,7 @@ import Foundation
 import AppKit
 
 
+
 public extension SymNSTextView {
 
     /**
@@ -38,6 +39,15 @@ public extension SymNSTextView {
         return numberOfLines
     }
     
+    
+    func insertTextAtCursor(textToInsert: String) {
+        let range = self.selectedRange()
+        if let textStorage = self.textStorage {
+            textStorage.beginEditing()
+            textStorage.replaceCharacters(in: range, with: textToInsert)
+            textStorage.endEditing()
+        }
+    }
     
 }
 

@@ -84,6 +84,34 @@ open class HighlightedTextEditorCoordinator: NSObject {
 //            }
 //            .store(in: &cancellables)
         
+        context.$placeholderText
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newPlaceholder in
+#if os(iOS)
+                guard let growingView = self?.growingView,
+                let newPlaceholder else { return }
+                growingView.placeholder = NSString(string: newPlaceholder)
+                #else
+                
+                #endif
+            }
+            .store(in: &cancellables)
+        
+        
+        
+        context.$placeholderTextAttr
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newPlaceholder in
+#if os(iOS)
+                guard let growingView = self?.growingView,
+                let newPlaceholder else { return }
+                growingView.attributedPlaceholder = newPlaceholder
+                #else
+                
+                #endif
+            }
+            .store(in: &cancellables)
+        
     }
     
     func setIsEditing(to newValue: Bool) {

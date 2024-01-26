@@ -109,6 +109,20 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     private var _needsRefreshPub =  PassthroughSubject<Bool, Never>()
     public var needsRefreshPub: AnyPublisher<Bool, Never> { _needsRefreshPub.eraseToAnyPublisher() }
     
+    @Published public var placeholderText: String?
+    @Published public var placeholderTextAttr: NSAttributedString?
+    
+    public var interactiveKeyboardDismissal: Bool
+    
+    public func setPlaceholderText(_ text: String) {
+        self.placeholderText = text
+        self.placeholderTextAttr = nil
+    }
+    public func setPlaceholderTextAttributed(_ attr: NSAttributedString) {
+        self.placeholderText = nil
+        self.placeholderTextAttr = attr
+    }
+    
     
     private(set) public var pendingCursorChange: CursorChangePos? = nil
     public func consumePendingCursorChange() -> CursorChangePos? {
@@ -126,13 +140,20 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
                 expMinHeight: CGFloat = 50,
                 expMaxHeight: CGFloat = 400,
                 startingHeight: CGFloat = 0,
-                dynamicHeight: Bool = true
+                dynamicHeight: Bool = true,
+                placeholderText: String? = nil,
+                placeholderTextAttr: NSAttributedString? = nil,
+                interactiveKeyboardDismissal: Bool = false
     ) {
+        self.interactiveKeyboardDismissal = interactiveKeyboardDismissal
         
         self.id = id
         self.highlightRules = highlightRules
         self.currentHeightPub = .init(startingHeight)
         self.dynamicHeight = dynamicHeight
+        
+        self.placeholderText = placeholderText
+        self.placeholderTextAttr = placeholderTextAttr
         
         
         self.iosMinLineCount = iosMinLineCount

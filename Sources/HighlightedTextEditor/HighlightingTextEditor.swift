@@ -21,6 +21,7 @@ let defaultEditorFontSize: CGFloat = 16.0
 let defaultEditorFont = NSFont.systemFont(ofSize: 16.0)
 //let defaultEditorFont = NSFont.systemFont(ofSize: NSFont.systemFontSize)
 let defaultEditorTextColor = NSColor.labelColor
+let defaultEditorPlaceholderColor = NSColor.placeholderTextColor
 
 
 #else
@@ -33,8 +34,9 @@ public typealias SystemTextView = UITextView
 public typealias SystemScrollView = UIScrollView
 
 let defaultEditorFont = UIFont.preferredFont(forTextStyle: .body)
-let defaultEditorFontSize: CGFloat = 16.0
+let defaultEditorFontSize: CGFloat = 17.0
 let defaultEditorTextColor = UIColor.label
+let defaultEditorPlaceholderColor = UIColor.placeholderText
 
 #endif
 
@@ -119,6 +121,8 @@ public typealias AcceptableDroppedItems = [UTType]
 extension HighlightingTextEditor {
     var placeholderFont: SystemColorAlias { SystemColorAlias() }
 
+    
+    @inlinable
     public static func getHighlightedText(
         text: String, highlightRules: [HighlightRule]
     ) -> NSMutableAttributedString {
