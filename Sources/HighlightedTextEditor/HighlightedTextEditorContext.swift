@@ -352,9 +352,13 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
         self.resolvedIsEditingPub.send(isActive)
     }
     
+    @Published var editingActive: Bool = false
+    
+    
     
     //called to SET the active/inactive state of the editor
     public func setEditingActive(isActive: Bool) {
+        
         if isActive {
             self.startEditingText()
         } else {
@@ -364,6 +368,9 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     
     
     public func stopEditingText() {
+//        if self.editingActive {
+//            self.editingActive = false
+//        }
         if resolvedIsEditingPub.value {
             isEditingTextPub.send(false)
         }
@@ -371,6 +378,10 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
     
     
     public func startEditingText() {
+//        if !self.editingActive {
+//            self.editingActive = true
+//        }
+        
         if !resolvedIsEditingPub.value {
             isEditingTextPub.send(true)
         }

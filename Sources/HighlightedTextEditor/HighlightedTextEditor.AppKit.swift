@@ -190,7 +190,8 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
         self.context.textDidChangeTo(content)
         self.syncChangesToView()
         
-        context.setEditingActive(isActive: true)
+        context.didMakeActive(isActive: true)
+//        context.setEditingActive(isActive: true)
         parent.onEditingChanged?()
     }
 
@@ -262,8 +263,9 @@ extension HighlightedTextEditorCoordinator: NSTextViewDelegate {
         let content = String(textView.textStorage?.string ?? "")
         self.context.textDidChangeTo(content)
         
-        context.setEditingActive(isActive: false)
-        
+//        context.setEditingActive(isActive: false)
+        context.didMakeActive(isActive: false)
+
         parent.onCommit?()
         
     }

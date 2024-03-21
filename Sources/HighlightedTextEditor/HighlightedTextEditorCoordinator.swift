@@ -69,11 +69,19 @@ open class HighlightedTextEditorCoordinator: NSObject {
 //            .dropFirst(4)
             .receive(on: DispatchQueue.main)
             .sink { [weak self] newIsEditing in
-//                print("context.isEditingText: \(newIsEditing)")
+                print("context.isEditingText: \(newIsEditing)")
                 self?.setIsEditing(to: newIsEditing)
             }
             .store(in: &cancellables)
         
+        context.$editingActive
+            .sink { isEditingActive in
+                debugPrint("context.editingActive: \(isEditingActive)")
+                DispatchQueue.main.async { [weak self] in
+                    self?.setIsEditing(to: isEditingActive)
+                }
+            }
+            .store(in: &cancellables)
         
 //        context
 //            .$highlightedTxt
@@ -119,7 +127,12 @@ open class HighlightedTextEditorCoordinator: NSObject {
         print("setIsEditing: \(newValue) currently: \(textView.isFirstResponder) contextIsActive: \(self.context.resolvedIsEditingPub.value)")
         
         self.context.didMakeActive(isActive: newValue)
-        if newValue == textView.isFirstResponder { return }
+        if newValue == textView.isFirstResponder {
+            debugPrint("setIsEditing: \(newValue) already in correct state")
+            return
+        }
+        debugPrint("setIsEditing: \(newValue) -- not in correct state. Setting now")
+        
         if newValue {
             #if os(iOS)
             textView.becomeFirstResponder()

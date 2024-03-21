@@ -203,9 +203,11 @@ extension HighlightedTextEditorCoordinator: RSKGrowingTextViewDelegate {
 //                self?.context.isEditingText = true
 //            }
 //        }
-        context.setEditingActive(isActive: true)
-        
+//        context.setEditingActive(isActive: true)
+        context.didMakeActive(isActive: true)
         parent.onEditingChanged?()
+        
+//        context.editingActive = true
     }
 
     public func textViewDidEndEditing(_ textView: UITextView) {
@@ -215,9 +217,11 @@ extension HighlightedTextEditorCoordinator: RSKGrowingTextViewDelegate {
 //            }
 //        }
 //
-        context.setEditingActive(isActive: false)
-        
+//        context.setEditingActive(isActive: false)
+        context.didMakeActive(isActive: false)
+
         parent.onCommit?()
+//        context.editingActive = false
     }
     
 //    @available(iOS 16.0, *)
