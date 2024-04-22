@@ -1,12 +1,12 @@
-// swift-tools-version:5.7
+// swift-tools-version:5.9
 
 import PackageDescription
 
 public let package = Package(
     name: "HighlightedTextEditor",
     platforms: [
-        .macOS(.v11),
-        .iOS(.v14)
+        .macOS(.v14),
+        .iOS(.v17)
     ],
     products: [
         .library(
