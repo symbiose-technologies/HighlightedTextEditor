@@ -39,13 +39,16 @@ public extension SymNSTextView {
         return numberOfLines
     }
     
-    
-    func insertTextAtCursor(textToInsert: String) {
+    @discardableResult
+    func insertTextAtCursor(textToInsert: String) -> Bool {
         let range = self.selectedRange()
         if let textStorage = self.textStorage {
             textStorage.beginEditing()
             textStorage.replaceCharacters(in: range, with: textToInsert)
             textStorage.endEditing()
+            return true
+        } else {
+            return false
         }
     }
     

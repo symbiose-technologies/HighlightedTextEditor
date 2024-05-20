@@ -52,7 +52,6 @@ open class HighlightedTextEditorCoordinator: NSObject {
     }
     
     
-    
     func subscribeToContextChanges() {
         
         context
@@ -63,6 +62,14 @@ open class HighlightedTextEditorCoordinator: NSObject {
             }
             .store(in: &cancellables)
         
+        context.textInsertionRequestPub
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self]  newInsertionRequest in
+                let didInsert = self?.executeTextInsertionRequest(insertionReq: newInsertionRequest)
+                debugPrint("didInsert: \(didInsert)")
+                
+            }
+            .store(in: &cancellables)
         
         context.isEditingTextPub
             //skip the first 4 published events
@@ -119,8 +126,9 @@ open class HighlightedTextEditorCoordinator: NSObject {
                 #endif
             }
             .store(in: &cancellables)
-        
     }
+    
+    
     
     func setIsEditing(to newValue: Bool) {
         guard let textView = self.textView else { return }
@@ -158,6 +166,18 @@ open class HighlightedTextEditorCoordinator: NSObject {
     }
     
 #if canImport(UIKit)
+    func executeTextInsertionRequest(insertionReq: TextEditorCursorInsertionRequest) -> Bool {
+        guard let textView = self.textView else { return  false }
+        updatingUIView = true
+
+        
+        let didInsert = textView.insertTextAtCurrentCursor(textToInsert: insertionReq.textToInsert)
+        updatingUIView = false
+
+        
+        return didInsert
+    }
+    
 func syncChangesToView_Platform() {
     guard let uiView = self.growingView else { return }
     
@@ -198,6 +218,18 @@ func syncChangesToView_Platform() {
 #endif
     
     #if canImport(AppKit)
+    func executeTextInsertionRequest(insertionReq: TextEditorCursorInsertionRequest) -> Bool {
+        guard let textView = self.textView else { return  false }
+        self.updatingNSView = true
+
+        let didInsert = textView.insertTextAtCursor(textToInsert: insertionReq.textToInsert)
+        self.updatingNSView = false
+
+        
+        return didInsert
+    }
+    
+    
     func syncChangesToView_Platform() {
         //TODO handle cursor change on macOS
         guard let view = self.textView else { return }

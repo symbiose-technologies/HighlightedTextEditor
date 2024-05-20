@@ -67,6 +67,8 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
 
     public func makeUIView(context: Context) -> RSKGrowingTextView {
         print("[HighlightedTextEditor] makeUIView")
+        print("[HighlightedTextEditor] makeUIView -- contextIsFocused: \(context.environment.isFocused)")
+        
         
         var growingView = RSKGrowingTextView()
         if #available(iOS 16.0, *) {
@@ -116,6 +118,7 @@ public struct HighlightedTextEditor: UIViewRepresentable, HighlightingTextEditor
 
     public func updateUIView(_ uiView: RSKGrowingTextView, context: Context) {
         print("[HighlightedTextEditor] updateUIView")
+        print("[HighlightedTextEditor] updateUIView -- contextIsFocused: \(context.environment.isFocused)")
 
         uiView.isScrollEnabled = false
         context.coordinator.updatingUIView = true

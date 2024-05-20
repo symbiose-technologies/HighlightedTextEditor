@@ -21,6 +21,15 @@ public protocol HighlightedTextEditorProcessor {
 
 
 
+public struct TextEditorCursorInsertionRequest: Equatable, Hashable {
+    public var id: String
+    public var textToInsert: String
+    
+    public init(id: String = UUID().uuidString, textToInsert: String) {
+        self.id = id
+        self.textToInsert = textToInsert
+    }
+}
 
 
 public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable {
@@ -131,6 +140,8 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
         return change
         
     }
+    
+    public var textInsertionRequestPub: PassthroughSubject<TextEditorCursorInsertionRequest, Never> = .init()
     
     public init(_ startingText: String = "",
                 highlightRules: [HighlightRule] = .markdown,
@@ -289,9 +300,12 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
             
             self.pendingCursorChange = cursorChange
             self.setNeedsViewRefresh()
-            
         }
-        
+    }
+    
+    public func insertTextAtCursor(_ txt: String) {
+        let newReq = TextEditorCursorInsertionRequest(textToInsert: txt)
+        self.textInsertionRequestPub.send(newReq)
     }
     
     public func setCurrentFrameSize(_ size: CGSize) {

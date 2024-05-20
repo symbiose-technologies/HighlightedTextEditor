@@ -33,14 +33,17 @@ public extension UITextView {
         return numberOfLines
     }
     
-    func insertTextAtCurrentCursor(textToInsert: String) {
-        guard let selectedRange = self.selectedTextRange else { return }
+    
+    @discardableResult
+    func insertTextAtCurrentCursor(textToInsert: String) -> Bool {
+        guard let selectedRange = self.selectedTextRange else { return false }
 
         let cursorPosition = self.offset(from: self.beginningOfDocument, to: selectedRange.start)
         let updatedText = NSMutableAttributedString(attributedString: self.attributedText)
         
         updatedText.insert(NSAttributedString(string: textToInsert), at: cursorPosition)
         self.attributedText = updatedText
+        return true
     }
     
 }
