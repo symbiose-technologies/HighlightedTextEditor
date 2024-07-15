@@ -7,6 +7,7 @@
 #if os(macOS)
 import Foundation
 import AppKit
+import SwiftUI
 
 open class SymNSTextView: NSTextView {
     
@@ -19,7 +20,7 @@ open class SymNSTextView: NSTextView {
     open override var frame: CGRect {
         didSet {
             let newSize = self.frame.size
-            print("new size: \(newSize) old size: \(oldValue.size)")
+//            print("new size: \(newSize) old size: \(oldValue.size)")
             
             if oldValue.size != newSize {
                 self.sizeChangeCb?(newSize)
@@ -32,6 +33,30 @@ open class SymNSTextView: NSTextView {
     
     var onPastedContent: OnPastedContentCallback?
     var onDroppedContent: OnDroppedContentCallback?
+    
+    
+    open var placeholderString: String = "" {
+        didSet {
+            self.needsDisplay = true
+        }
+    }
+    
+    open var placeholderInsetPadding: EdgeInsets = .init(top: 0, leading: 0, bottom: 0, trailing: 0)
+    open override func draw(_ dirtyRect: NSRect) {
+        super.draw(dirtyRect)
+        if string.isEmpty && !placeholderString.isEmpty {
+            let attributes: [NSAttributedString.Key: Any] = [
+                .foregroundColor: NSColor.placeholderTextColor,
+                .font: self.font as Any
+            ]
+            let padding = placeholderInsetPadding
+            let rect = dirtyRect
+//            let rect = CGRect(x: padding.leading, y: padding.top, width: self.bounds.width - padding.trailing, height: self.bounds.height - padding.bottom)
+            
+            placeholderString.draw(in: rect.insetBy(dx: padding.leading, dy: padding.top), withAttributes: attributes)
+        }
+    }
+    
     
     open var attributedText: NSAttributedString {
         get { attributedString() }

@@ -12,7 +12,7 @@ open class DynamicHeightNSTextView: SymNSTextView {
 
     var scrollViewHeight: NSLayoutConstraint? = nil
     var maxHeight: CGFloat = CGFloat.greatestFiniteMagnitude
-    var minHeight: CGFloat = 50.0
+    var minHeight: CGFloat = 40.0
     
     
     
@@ -27,9 +27,18 @@ open class DynamicHeightNSTextView: SymNSTextView {
         guard let container = self.textContainer,
               let layoutMgr = self.layoutManager else { return NSSize(width: 0.0, height: 0.0)}
         layoutMgr.ensureLayout(for: container)
-        let size = layoutMgr.usedRect(for: container).size
-        let modifiedSize = NSSize(width: size.width, height: max(size.height, 40))
+        
+        var usedRect = layoutMgr.usedRect(for: container)
+        usedRect.size.height += placeholderInsetPadding.top + placeholderInsetPadding.bottom
+//        usedRect.size.width += placeholderInsetPadding.leading + placeholderInsetPadding.trailing
+
+        let modifiedSize = NSSize(width: usedRect.width, height: max(usedRect.height, minHeight))
         return modifiedSize
+        
+        
+//        let size = layoutMgr.usedRect(for: container).size
+//        let modifiedSize = NSSize(width: size.width, height: max(size.height, minHeight))
+//        return modifiedSize
     }
     
 //    open override var attributedText: NSAttributedString {
@@ -70,12 +79,6 @@ open class DynamicHeightNSTextView: SymNSTextView {
         super.didChangeText()
         
         self.invalidateIntrinsicContentSize()
-               
-//        if let scrollHeight = self.scrollViewHeight {
-//            let newHeight = min(self.maxHeight, max(self.intrinsicContentSize.height, self.minHeight))
-//            NSAnimationContext.current.duration = 0.25
-//            scrollHeight.animator().constant = newHeight
-//        }
         
     }
     

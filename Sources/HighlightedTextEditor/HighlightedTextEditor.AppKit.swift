@@ -31,6 +31,11 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
     @State var currentSelection: [NSRange] = []
     
     
+    @Environment(\.textViewInsetPadding) private var insetPadding
+    @Environment(\.textViewPlaceholderString) private var placeholderString
+    @Environment(\.textViewEditorFont) private var textViewEditorFont
+
+    
     var highlightRules: [HighlightRule] {
         context.highlightRules
     }
@@ -70,6 +75,12 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
         
         textView.delegate = context.coordinator
         
+        textView.textView.placeholderString = placeholderString ?? ""
+        textView.textView.placeholderInsetPadding = insetPadding
+        textView.textView.textContainerInset = NSSize(width: 0, height: insetPadding.top + insetPadding.bottom)
+        textView.textView.textContainer?.lineFragmentPadding = insetPadding.leading + insetPadding.trailing
+        textView.textView.font = textViewEditorFont
+        
         textView.textView.sizeChangeCb = { size in
             self.context.setCurrentFrameSize(size)
         }
@@ -97,6 +108,14 @@ public struct HighlightedTextEditor: NSViewRepresentable, HighlightingTextEditor
     
     public func updateNSView(_ view: ScrollableTextView, context: Context) {
         print("[HighlightedTextEditor] updateNSView called")
+        
+        view.textView.placeholderString = placeholderString ?? ""
+        view.textView.placeholderInsetPadding = insetPadding
+        view.textView.textContainerInset = NSSize(width: 0, height: insetPadding.top + insetPadding.bottom)
+        view.textView.textContainer?.lineFragmentPadding = insetPadding.leading + insetPadding.trailing
+        view.textView.font = textViewEditorFont
+        
+        
 //        context.coordinator.updatingNSView = true
 //        let typingAttributes = view.textView.typingAttributes
 //

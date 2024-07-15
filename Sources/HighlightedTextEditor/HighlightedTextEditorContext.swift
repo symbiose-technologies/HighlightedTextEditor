@@ -234,7 +234,7 @@ public class HighlightedTextEditorContext: ObservableObject, Equatable, Hashable
 //            .store(in: &cancellables)
     }
     
-    private let textProcessingQueue = DispatchQueue(label: "com.symbiose.fractal.text-processing", qos: .userInitiated)
+    private lazy var textProcessingQueue = DispatchQueue(label: "com.symbiose.fractal.text-processing.\(self.id)", qos: .userInitiated)
     private var isProcessingText: Bool = false
     private var latestRawText: String?
     
